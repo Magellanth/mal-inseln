@@ -2,7 +2,7 @@
 
 import { h, add, ask, toast } from './dom.js';
 import { app, go, today, persist } from './core.js';
-import { ROW_ORDER, STAGE_NAMES, rowKeys, parseKey, manualUnlock, goalDays, newState } from '../model.js';
+import { ROW_ORDER, STAGE_NAMES, rowKeys, parseKey, manualUnlock, goalDays, newState, DAY_GOAL_OPTIONS, dayGoalTarget } from '../model.js';
 import { ROW_THEMES, syncStickers } from '../stickers.js';
 import { encodeBackup, decodeBackup } from '../storage.js';
 import * as sound from '../sound.js';
@@ -187,8 +187,26 @@ function settings(s) {
       soundBtn.setAttribute('aria-pressed', String(s.settings.sound));
     },
   }, s.settings.sound ? 'Töne an' : 'Töne aus');
+  const goalButtons = DAY_GOAL_OPTIONS.map((value) => h('button', {
+    class: `btn btn-small ${dayGoalTarget(s) === value ? 'btn-sun' : ''}`,
+    'aria-pressed': String(dayGoalTarget(s) === value),
+    onclick: () => {
+      s.settings.dayGoal = value;
+      persist();
+      goalButtons.forEach((b, i) => {
+        const on = DAY_GOAL_OPTIONS[i] === value;
+        b.classList.toggle('btn-sun', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      toast(`Tagesziel: ${value} richtige Aufgaben.`);
+    },
+  }, String(value)));
   return h('section', { class: 'card' },
     h('h2', {}, 'Einstellungen'),
+    h('div', { style: { display: 'grid', gap: '8px' } },
+      h('p', { style: { fontWeight: 700 } }, 'Tagesziel: richtige Aufgaben pro Tag'),
+      h('p', { class: 'soft', style: { fontSize: '15px' } }, 'Eine Runde hat 15 Aufgaben. 30 sind etwa zwei Runden (6–8 Minuten). Ein schon erreichtes Tagesziel bleibt erreicht.'),
+      h('div', { class: 'btn-row', role: 'group', 'aria-label': 'Tagesziel' }, goalButtons)),
     h('label', { style: { fontWeight: 700 } }, 'Name', name),
     h('div', { class: 'btn-row' },
       h('button', {

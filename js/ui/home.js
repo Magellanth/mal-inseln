@@ -5,7 +5,7 @@ import { app, go, today, onLeave, persist } from './core.js';
 import { medals, isStandalone, isIOS, emojiOk } from './widgets.js';
 import {
   ROW_ORDER, STAGE_NAMES, unlockedRows, focusRow, isDiscovered, dueKeys, rowWeakCount,
-  dayGoalReached, weekGoalDays, WEEK_GOAL_DAYS,
+  dayGoalReached, dayProgress, weekGoalDays, WEEK_GOAL_DAYS,
 } from '../model.js';
 import { ROW_THEMES } from '../stickers.js';
 import { weekStart } from '../days.js';
@@ -22,6 +22,16 @@ function statusText(s, t) {
   if (dayGoalReached(s, t)) return 'Tagesziel geschafft! Eine Runde extra geht immer.';
   if (focus !== null) return `Weiter geht’s auf der ${focus}er-Insel.`;
   return 'Bereit für dein Training?';
+}
+
+export function goalBar(s, t) {
+  const { right, target, reached } = dayProgress(s, t);
+  const shown = Math.min(right, target);
+  return h('div', { class: `goal ${reached ? 'done' : ''}`, role: 'img', 'aria-label': reached ? 'Tagesziel geschafft' : `Tagesziel: ${shown} von ${target} richtig` },
+    h('div', { class: 'goal-head' },
+      h('span', {}, 'Tagesziel'),
+      h('b', {}, reached ? 'geschafft!' : `${shown} von ${target} richtig`)),
+    h('div', { class: 'goal-bar' }, h('i', { style: { width: `${reached ? 100 : (shown / target) * 100}%` } })));
 }
 
 function weekCard(s, t) {
@@ -141,6 +151,7 @@ export function home(root) {
 
   const hero = h('section', { class: 'card hero' },
     h('p', { class: 'status' }, statusText(s, t)),
+    goalBar(s, t),
     h('button', { class: 'btn btn-sun btn-wide', onclick: () => go('play', { mode: 'daily' }) }, 'Tagestraining starten'));
 
   const map = h('div', { class: 'map' }, ROW_ORDER.map((n, i) => island(s, n, i, t, focus, nextLocked)));

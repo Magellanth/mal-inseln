@@ -132,12 +132,13 @@ Der Startbildschirm zeigt eine **Reise-Karte mit 10 Stationen** (eine pro Reihe,
 ### 7.2 Sticker **[Vorgabe: Sticker; Vorschlag: Ausgestaltung]**
 Ein **Stickeralbum** mit Seiten nach Themen. Rund 80 Sticker:
 - **Reihen-Sticker (40):** Jede Reihe hat ein eigenes Tier/Maskottchen; je Stufe ein Sticker (Bronze, Silber, Gold, Meister). Meister-Sticker sind **Glitzer-Sticker** (Holo-Schimmer).
-- **Tages-Sticker (~30):** Wer an einem Tag das Tagesziel erreicht (1 Tagestraining oder 15 richtig gelöste Aufgaben), bekommt einen zufälligen, noch nicht gesammelten Sticker aus diesem Pool. Höchstens einer pro Tag; wurde die App vorher geschlossen, wird er beim nächsten Start nachgereicht. Sind alle gesammelt, zählt nur der Stempel.
+- **Tages-Sticker (~30):** Wer an einem Tag das Tagesziel erreicht (siehe 7.3), bekommt einen zufälligen, noch nicht gesammelten Sticker aus diesem Pool. Höchstens einer pro Tag; wurde die App vorher geschlossen, wird er beim nächsten Start nachgereicht. Sind alle gesammelt, zählt nur der Stempel.
 - **Besondere Sticker (~10):** z. B. erste Runde, erste fehlerfreie Runde, 10 / 25 richtig in Folge, 5 / 15 / 30 Übungstage, eine „Wackel-Aufgabe“ (≥ 3 Fehler) bis Fach 4 gebracht, neuer Rekord, alle Reihen freigeschaltet, alle Reihen Meister.
 - Sticker werden **nur durch echtes Lernen** verdient, nie weggenommen.
 - Darstellung: Emoji im Sticker-Look (weißer Rand, Schatten, leicht gedreht) – bunt, kostenlos, keine Bilddateien. Neue Sticker kommen mit einer kleinen „Auspack“-Animation.
 
 ### 7.3 Dranbleiben ohne Druck
+- **Tagesziel:** 30 richtig gelöste Aufgaben am Tag (etwa zwei Runden à 15), egal in welchem Modus; falsche Antworten zählen nicht. Im Eltern-Bereich einstellbar (20/30/40/50). Ein erreichter Tag bleibt erreicht, auch wenn das Ziel später erhöht wird. Startseite und Ergebnis zeigen den Zähler („12 von 30 richtig“); solange das Ziel fehlt, ist „Noch eine Runde“ der Hauptknopf. *(Geändert am 15.11.: anfangs zählte schon ein Tagestraining – am Entdecker-Tag waren das nur 10 Aufgaben mit Hilfe.)*
 - **Stempelkarte der Woche:** Jeder Übungstag bekommt einen Stempel. 4 Stempel in einer Woche (Mo–So) → besonderer Wochen-Sticker. Ein verpasster Tag kostet nichts; es gibt keine Serie, die „reißt“.
 - Begrüßung mit dem Namen des Kindes (einmal eingegeben) und einem Hinweis, was heute ansteht („3 Aufgaben wollen wiederholt werden“).
 - Feiern: Konfetti bei neuer Stufe/neuer Reihe, kurzer Jubel beim Sticker.

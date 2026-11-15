@@ -1,8 +1,10 @@
 // Ergebnis nach einer Runde: Punkte, neue Stufen und Inseln, Sticker-Tüten zum Aufreißen.
 
 import { h } from './dom.js';
-import { go } from './core.js';
+import { app, go, today } from './core.js';
 import { stickerEl, medal } from './widgets.js';
+import { goalBar } from './home.js';
+import { dayGoalReached } from '../model.js';
 import { STAGE_NAMES } from '../model.js';
 import { STICKER_BY_ID, ROW_THEMES } from '../stickers.js';
 import { confetti } from '../fx.js';
@@ -64,7 +66,12 @@ export function result(root, p) {
       h('p', {}, p.perfect ? 'Alles richtig – stark!' : 'Aufgaben richtig. Was noch wackelt, kommt wieder dran.'));
   }
 
+  const t = today();
+  const goalDone = dayGoalReached(app.state, t);
   const news = [
+    p.goalReached && h('div', { class: 'card news-item' },
+      h('span', { class: 'big', 'aria-hidden': 'true' }, '✅'),
+      h('div', {}, h('h3', {}, 'Tagesziel geschafft!'), h('p', { class: 'soft' }, 'Dafür gibt es heute einen Stempel auf deiner Wochenkarte.'))),
     ...stageUps.map((u) => h('div', { class: 'card news-item' },
       medal(u.stage),
       h('div', {}, h('h3', {}, `${u.row}er-Insel: ${STAGE_NAMES[u.stage]}!`), h('p', { class: 'soft' }, STAGE_TEXT[u.stage])))),
@@ -73,17 +80,23 @@ export function result(root, p) {
       h('div', {}, h('h3', {}, `Neue Insel: ${ROW_THEMES[n].title}`), h('p', { class: 'soft' }, `Die ${n}er-Reihe wartet auf dich.`)))),
   ];
 
+  // Solange das Tagesziel fehlt, ist „Noch eine Runde“ der Hauptknopf.
+  const againLabel = p.mode === 'blitz' ? 'Nochmal jagen' : 'Noch eine Runde';
+  const againParams = p.mode === 'blitz' ? { mode: 'blitz' } : { mode: p.mode, row: p.row };
+  const again = h('button', { class: `btn btn-wide ${goalDone ? '' : 'btn-sun'}`, onclick: () => go('play', againParams) }, againLabel);
+  const toMap = h('button', { class: `btn btn-wide ${goalDone ? 'btn-sun' : ''}`, onclick: () => go('home') }, 'Zur Inselkarte');
+  const visibleNews = news.filter(Boolean);
+
   root.append(h('div', { class: 'result' },
     head,
-    news.length > 0 && h('div', { class: 'news' }, news),
+    !goalDone && h('section', { class: 'card', style: { padding: '14px 16px' } }, goalBar(app.state, t)),
+    visibleNews.length > 0 && h('div', { class: 'news' }, visibleNews),
     stickers.length > 0 && h('section', {},
       h('h2', { style: { textAlign: 'center', marginBottom: '12px' } }, stickers.length === 1 ? 'Ein neuer Sticker!' : `${stickers.length} neue Sticker!`),
       h('div', { class: 'packs' }, stickers.map(pack))),
-    h('button', { class: 'btn btn-sun btn-wide', onclick: () => go('home') }, 'Zur Inselkarte'),
-    p.mode !== 'blitz' && h('button', { class: 'btn btn-wide', onclick: () => go('play', { mode: p.mode, row: p.row }) }, 'Noch eine Runde'),
-    p.mode === 'blitz' && h('button', { class: 'btn btn-wide', onclick: () => go('play', { mode: 'blitz' }) }, 'Nochmal jagen')));
+    goalDone ? [toMap, again] : [again, toMap]));
 
-  if (stageUps.length || unlocked.length || p.isRecord) {
+  if (stageUps.length || unlocked.length || p.isRecord || p.goalReached) {
     sound.play('stage');
     confetti();
   } else {

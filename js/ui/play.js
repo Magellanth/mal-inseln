@@ -37,7 +37,7 @@ export function play(root, params) {
   const { mode, row } = params;
   const plan = mode === 'daily' ? buildDailyRound(s, today()) : buildRowRound(s, row);
   const round = new Round(plan.tasks, { easyPool: easyPool(s) });
-  const summary = { mode, row, discoverRow: plan.discoverRow, stageUps: [], unlocked: [] };
+  const summary = { mode, row, discoverRow: plan.discoverRow, stageUps: [], unlocked: [], goalReached: false };
   const worldRow = plan.discoverRow ?? (mode === 'row' ? row : null);
 
   let label;
@@ -147,6 +147,7 @@ export function play(root, params) {
     const res = applyAnswer(s, t.key, { correct, ms, today: today() });
     summary.stageUps.push(...res.stageUps);
     summary.unlocked.push(...res.unlocked);
+    summary.goalReached ||= res.goalReached;
     persist();
     busy = true;
     if (correct) {
@@ -196,7 +197,7 @@ export function play(root, params) {
 function blitz(root) {
   const s = app.state;
   const prevRecord = s.records.blitz;
-  const summary = { stageUps: [], unlocked: [] };
+  const summary = { stageUps: [], unlocked: [], goalReached: false };
   let score = 0;
   let elapsed = 0;
   let last = 0;
@@ -275,6 +276,7 @@ function blitz(root) {
     const res = applyAnswer(s, current.key, { correct, ms: performance.now() - shownAt, today: today() });
     summary.stageUps.push(...res.stageUps);
     summary.unlocked.push(...res.unlocked);
+    summary.goalReached ||= res.goalReached;
     persist();
     busy = true;
     if (correct) {

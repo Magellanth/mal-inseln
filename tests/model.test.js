@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { dayNum, weekStart } from '../js/days.js';
 import {
   ROW_ORDER, newState, cardKey, parseKey, applyAnswer, rowStage,
-  unlockedRows, focusRow, manualUnlock, dueKeys,
+  unlockedRows, focusRow, manualUnlock, dueKeys, dayGoalReached, dayGoalTarget, dayProgress, recordRound,
 } from '../js/model.js';
 
 const T = 20000; // beliebiger Tag
@@ -149,6 +149,44 @@ test('dueKeys: nur offene Reihen, sortiert nach due dann Fach', () => {
   Object.assign(s.cards['4x2'], { box: 2, due: T + 1 });
   Object.assign(s.cards['1x7'], { box: 2, due: T - 3 }); // Reihe 7 gesperrt
   assert.deepEqual(dueKeys(s, T), ['2x2', '1x2', '3x2']);
+});
+
+function answerN(state, count, { correct = true, today = T } = {}) {
+  const results = [];
+  for (let i = 0; i < count; i++) results.push(applyAnswer(state, cardKey((i % 10) + 1, 2), { correct, ms: 2000, today }));
+  return results;
+}
+
+test('Tagesziel: 30 richtige Aufgaben, falsche zählen nicht', () => {
+  const s = newState(T);
+  assert.equal(dayGoalTarget(s), 30);
+  answerN(s, 40, { correct: false });
+  answerN(s, 29);
+  assert.equal(dayGoalReached(s, T), false);
+  const [last] = answerN(s, 1);
+  assert.equal(last.goalReached, true);
+  assert.equal(dayGoalReached(s, T), true);
+  assert.equal(answerN(s, 1)[0].goalReached, false); // nur einmal gemeldet
+});
+
+test('Entdecker-Runde allein ist kein Tagesziel', () => {
+  const s = newState(T);
+  answerN(s, 10);
+  recordRound(s, { mode: 'daily', perfect: true, today: T });
+  assert.equal(dayGoalReached(s, T), false);
+  assert.deepEqual(dayProgress(s, T), { right: 10, target: 30, reached: false });
+});
+
+test('Tagesziel einstellbar; erreichtes Ziel bleibt, wenn es später erhöht wird', () => {
+  const s = newState(T);
+  s.settings.dayGoal = 20;
+  answerN(s, 20);
+  assert.equal(dayGoalReached(s, T), true);
+  s.settings.dayGoal = 50;
+  assert.equal(dayGoalReached(s, T), true);
+  assert.equal(dayGoalReached(s, T + 1), false);
+  s.settings.dayGoal = 7; // ungültig → Standard
+  assert.equal(dayGoalTarget(s), 30);
 });
 
 test('Statistik: Übungstag und Serie', () => {

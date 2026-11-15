@@ -143,6 +143,12 @@ p { margin: 0; }
 
 .hero { display: grid; gap: 14px; padding: 20px 18px 18px; margin-bottom: 18px; }
 .hero .status { font-size: 18px; }
+.goal { display: grid; gap: 6px; }
+.goal-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 15px; color: var(--ink-soft); }
+.goal-head b { font-family: var(--font-display); font-weight: 400; font-size: 19px; color: var(--ink); }
+.goal.done .goal-head b { color: var(--leaf); }
+.goal-bar { height: 16px; border: var(--line); border-radius: 10px; background: var(--foam); overflow: hidden; }
+.goal-bar i { display: block; height: 100%; background: var(--leaf); transition: width 0.4s ease; }
 .hero .btn { min-height: 64px; font-size: 25px; }
 
 .week { margin-bottom: 22px; padding: 14px 16px; }

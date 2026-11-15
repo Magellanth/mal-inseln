@@ -50,7 +50,7 @@ export function newState(today) {
     days: {},
     stats: { tasks: 0, right: 0, streak: 0, bestStreak: 0, rounds: 0, perfectRounds: 0 },
     records: { blitz: 0 },
-    settings: { sound: true, installHint: true },
+    settings: { sound: true, installHint: true, dayGoal: DAY_GOAL_DEFAULT },
     backupDay: null,
   };
   openRow(state, ROW_ORDER[0], false);
@@ -166,14 +166,24 @@ export function practiceDays(state) {
   return Object.values(state.days).filter((d) => d.tasks > 0).length;
 }
 
-// Tagesziel: ein Tagestraining geschafft oder mindestens 15 Aufgaben richtig gerechnet (Raten zählt nicht).
-// Das ist auch der Wochen-Stempel.
-export const DAY_GOAL_TASKS = 15;
+// Tagesziel: eine einstellbare Zahl richtig gelöster Aufgaben am Tag (Raten zählt nicht). Das ist auch der Wochen-Stempel.
+// Einmal erreicht, bleibt der Tag erreicht (day.goal), auch wenn die Eltern das Ziel später erhöhen.
+export const DAY_GOAL_DEFAULT = 30;
+export const DAY_GOAL_OPTIONS = [20, 30, 40, 50];
 export const WEEK_GOAL_DAYS = 4;
+
+export function dayGoalTarget(state) {
+  const goal = Number(state.settings?.dayGoal);
+  return DAY_GOAL_OPTIONS.includes(goal) ? goal : DAY_GOAL_DEFAULT;
+}
 
 export function dayGoalReached(state, day) {
   const d = state.days[day];
-  return !!d && (d.daily > 0 || d.right >= DAY_GOAL_TASKS);
+  return !!d && (d.goal === true || d.right >= dayGoalTarget(state));
+}
+
+export function dayProgress(state, day) {
+  return { right: state.days[day]?.right ?? 0, target: dayGoalTarget(state), reached: dayGoalReached(state, day) };
 }
 
 export function goalDays(state) {
@@ -225,7 +235,13 @@ export function applyAnswer(state, key, { correct, ms, today }) {
     card.due = card.box >= 1 ? today : null;
   }
 
+  let goalReached = false;
+  if (!day.goal && day.right >= dayGoalTarget(state)) {
+    day.goal = true;
+    goalReached = true;
+  }
+
   const stageUps = updateStage(state, n);
   const unlocked = checkUnlocks(state);
-  return { oldBox, newBox: card.box, stageUps, unlocked };
+  return { oldBox, newBox: card.box, stageUps, unlocked, goalReached };
 }
