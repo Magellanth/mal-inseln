@@ -220,8 +220,8 @@ p { margin: 0; }
   transform: rotate(-6deg);
 }
 .isle .name { margin-top: 14px; font-family: var(--font-display); font-size: 17px; line-height: 1; }
-.isle .medals { display: flex; gap: 4px; }
-.medal { width: 14px; height: 14px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); opacity: 0.45; }
+.medals { display: inline-flex; gap: 4px; }
+.medal { display: inline-block; flex: none; width: 14px; height: 14px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); opacity: 0.45; }
 .medal.on { opacity: 1; }
 .medal.s1.on { background: var(--bronze); }
 .medal.s2.on { background: var(--silver); }
@@ -469,6 +469,45 @@ p { margin: 0; }
   line-height: 18px;
   z-index: 1;
 }
+
+/* ---------- Reihen-Übersicht ---------- */
+
+.row-title { flex: 1; min-width: 0; }
+.row-title h1 { font-size: 30px; }
+.row-title p { font-size: 15px; }
+.row-sheet { display: grid; gap: 14px; margin-bottom: 16px; }
+.row-sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.row-sheet-head h2 { font-size: 21px; }
+.count-row { justify-content: flex-start; }
+.count-row .stone { background: color-mix(in srgb, var(--world, var(--sand)) 45%, #fff); }
+.times { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.times li { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 12px; min-height: 48px; padding: 2px 6px 2px 12px; border-radius: 14px; }
+.times li.core { background: #fff1bf; }
+.times .eq { font-family: var(--font-display); font-size: 28px; line-height: 1; }
+.times .res {
+  min-width: 2.3em;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  background: none;
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1;
+  text-align: center;
+  color: var(--ink);
+  opacity: 1;
+}
+.times .res.hidden { border: 3px dashed var(--ink-soft); color: var(--ink-soft); background: var(--paper); cursor: pointer; }
+.times .res:disabled { cursor: default; }
+.status-dot { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--ink); border-radius: 50%; background: #e3eaee; }
+.status-dot.b1 { background: #ffb36b; }
+.status-dot.b2 { background: #ffe066; }
+.status-dot.b3, .status-dot.b4 { background: #7fd39b; }
+.status-dot.b5 { background: var(--leaf); }
+.row-sheet .legend .status-dot { width: 12px; height: 12px; margin-right: 4px; vertical-align: -1px; }
+.sub-head .medals { flex: none; }
+.row-go { position: sticky; bottom: calc(var(--safe-bottom) + 12px); z-index: 2; }
 
 /* ---------- Dialog ---------- */
 

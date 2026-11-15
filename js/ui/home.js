@@ -69,7 +69,7 @@ function island(s, n, i, t, focus, nextLocked) {
     style: { '--world': theme.color },
     'aria-label': label,
     onclick: () => {
-      if (open) go('play', { mode: 'row', row: n });
+      if (open) go('row', { row: n });
       else toast('Hol dir Silber auf deinen offenen Inseln – dann geht die nächste auf.');
     },
   },

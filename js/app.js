@@ -10,8 +10,9 @@ import { play } from './ui/play.js';
 import { result } from './ui/result.js';
 import { album } from './ui/album.js';
 import { parents } from './ui/parents.js';
+import { rowView } from './ui/row.js';
 
-app.screens = { welcome, home, play, result, album, parents };
+app.screens = { welcome, home, play, result, album, parents, row: rowView };
 app.state = load(undefined, today());
 sound.setEnabled(app.state.settings.sound);
 syncStickers(app.state, today());

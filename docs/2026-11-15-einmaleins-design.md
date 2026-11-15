@@ -122,7 +122,8 @@ Das Kind tippt danach die richtige Lösung einmal selbst ein (aktives Abrufen), 
    - Ziel-Trefferquote ca. 80 %: Nach 2 Fehlern in Folge kommt eine sichere Karte dazwischen.
    - Das ist die gewünschte **gemischte Abfrage**: Sobald mehrere Reihen offen sind, mischt das Tagestraining über alle.
 2. **Reihe üben:** Das Kind tippt eine freigeschaltete Reihe an → 10 Karten dieser Reihe gemischt (beim ersten Mal Entdecker-Runde).
-3. **Rekordjagd** (ab 3 freigeschalteten Reihen): 60 Sekunden, so viele richtige Aufgaben wie möglich aus allen freigeschalteten Reihen. Nur gegen den **eigenen** Rekord. Freiwillig; der einzige Modus mit sichtbarer Uhr. Zählt auch fürs Lernmodell (Fächer werden aktualisiert).
+3. **Reihen-Übersicht** *(ergänzt am 15.11. auf Wunsch)*: Ein Tipp auf eine offene Insel zeigt zuerst die ganze Reihe zum Durchlesen (`1 · 2 = 2` … `10 · 2 = 20`), darüber die Zählreihe zum Mitsprechen. Kernaufgaben (1·, 2·, 5·, 10·) sind markiert, ein Punkt je Aufgabe zeigt den Lernstand. „Ergebnisse abdecken“ ersetzt die Ergebnisse durch Fragezeichen, die sich einzeln aufdecken lassen. Von hier startet „Reihe üben“.
+4. **Rekordjagd** (ab 3 freigeschalteten Reihen): 60 Sekunden, so viele richtige Aufgaben wie möglich aus allen freigeschalteten Reihen. Nur gegen den **eigenen** Rekord. Freiwillig; der einzige Modus mit sichtbarer Uhr. Zählt auch fürs Lernmodell (Fächer werden aktualisiert).
 
 ## 7. Motivation
 
