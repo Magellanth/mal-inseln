@@ -48,7 +48,7 @@ export function newState(today) {
     stickers: {},
     weeks: {},
     days: {},
-    stats: { tasks: 0, right: 0, streak: 0, bestStreak: 0, rounds: 0, perfectRounds: 0 },
+    stats: { tasks: 0, right: 0, streak: 0, bestStreak: 0, rounds: 0, perfectRounds: 0, quizRight: 0, quizTotal: 0 },
     records: { blitz: 0 },
     settings: { sound: true, installHint: true, dayGoal: DAY_GOAL_DEFAULT },
     backupDay: null,
@@ -235,13 +235,29 @@ export function applyAnswer(state, key, { correct, ms, today }) {
     card.due = card.box >= 1 ? today : null;
   }
 
-  let goalReached = false;
-  if (!day.goal && day.right >= dayGoalTarget(state)) {
-    day.goal = true;
-    goalReached = true;
-  }
-
+  const goalReached = checkDayGoal(state, day);
   const stageUps = updateStage(state, n);
   const unlocked = checkUnlocks(state);
   return { oldBox, newBox: card.box, stageUps, unlocked, goalReached };
+}
+
+// Meldet true genau einmal: in dem Moment, in dem das Tagesziel erreicht wird.
+function checkDayGoal(state, day) {
+  if (day.goal || day.right < dayGoalTarget(state)) return false;
+  day.goal = true;
+  return true;
+}
+
+// Quizfrage beantwortet: zählt fürs Tagesziel, ändert aber keine Karte, Stufe oder Serie.
+export function recordQuiz(state, { correct, today }) {
+  const day = ensureDay(state, today);
+  day.tasks += 1;
+  state.stats.tasks += 1;
+  state.stats.quizTotal += 1;
+  if (correct) {
+    day.right += 1;
+    state.stats.right += 1;
+    state.stats.quizRight += 1;
+  }
+  return { goalReached: checkDayGoal(state, day) };
 }

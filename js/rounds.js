@@ -1,12 +1,15 @@
 // Rundenbau (Tagestraining, Reihe üben, Rekordjagd) und Rundenablauf mit Wiedervorlage falscher Aufgaben.
 
 import { parseKey, rowKeys, rowStage, focusRow, isDiscovered, dueKeys, unlockedRows } from './model.js';
+import { makeQuiz } from './quiz.js';
 
 export const DAILY_SIZE = 15;
 export const DUE_MAX = 8;
 export const DISCOVER_EXTRA = 5;
 export const SWAP_CHANCE = 0.25;
 export const MAX_REPEATS = 2;
+export const QUIZ_SECOND_CHANCE = 0.5; // Tagestraining: 1 Quizfrage, in jeder zweiten Runde 2
+const QUIZ_MIN_BEFORE = 2; // so viele Rechenaufgaben kommen mindestens vor der ersten Quizfrage
 
 export function shuffle(list, rng = Math.random) {
   const a = [...list];
@@ -35,6 +38,36 @@ function byWeakness(state, keys, rng) {
   return shuffle(keys, rng).sort((a, b) => state.cards[a].box - state.cards[b].box);
 }
 
+function quizTask(quiz) {
+  return { key: 'quiz', quiz, swapped: false, hop: false };
+}
+
+// Verteilt die Quizfragen gleichmäßig zwischen die Rechenaufgaben, nie ganz an den Anfang.
+export function mixInQuizzes(tasks, quizzes, rng = Math.random) {
+  const out = [...tasks];
+  const len = tasks.length;
+  const count = quizzes.length;
+  // von hinten einfügen, damit die vorderen Positionen gültig bleiben
+  for (let i = count - 1; i >= 0; i--) {
+    const lo = Math.max(QUIZ_MIN_BEFORE, Math.floor((len * i) / count) + 1);
+    const hi = Math.max(lo, Math.floor((len * (i + 1)) / count));
+    const at = Math.min(lo + Math.floor(rng() * (hi - lo + 1)), out.length);
+    out.splice(at, 0, quizTask(quizzes[i]));
+  }
+  return out;
+}
+
+function dailyQuizzes(state, rng) {
+  const first = makeQuiz(state, rng);
+  if (!first) return [];
+  if (rng() >= QUIZ_SECOND_CHANCE) return [first];
+  for (let i = 0; i < 6; i++) {
+    const second = makeQuiz(state, rng);
+    if (second && (second.type !== first.type || second.row !== first.row)) return [first, second];
+  }
+  return [first];
+}
+
 export function buildDailyRound(state, today, rng = Math.random) {
   const focus = focusRow(state);
   const due = dueKeys(state, today);
@@ -60,16 +93,15 @@ export function buildDailyRound(state, today, rng = Math.random) {
     if (chosen.size >= DAILY_SIZE) break;
     chosen.add(key);
   }
-  return {
-    mode: 'daily',
-    discoverRow: null,
-    tasks: shuffle([...chosen], rng).map((key) => makeTask(state, key, rng)),
-  };
+  const tasks = shuffle([...chosen], rng).map((key) => makeTask(state, key, rng));
+  return { mode: 'daily', discoverRow: null, tasks: mixInQuizzes(tasks, dailyQuizzes(state, rng), rng) };
 }
 
 export function buildRowRound(state, n, rng = Math.random) {
   if (!isDiscovered(state, n)) return { mode: 'row', discoverRow: n, tasks: discoveryTasks(state, n) };
-  return { mode: 'row', discoverRow: null, tasks: shuffle(rowKeys(n), rng).map((key) => makeTask(state, key, rng)) };
+  const tasks = shuffle(rowKeys(n), rng).map((key) => makeTask(state, key, rng));
+  const quiz = makeQuiz(state, rng, { row: n });
+  return { mode: 'row', discoverRow: null, tasks: mixInQuizzes(tasks, quiz ? [quiz] : [], rng) };
 }
 
 // Gewichtet zu niedrigen Fächern: Fach 0 → 6, Fach 5 → 1.
@@ -127,8 +159,9 @@ export class Round {
   submit(correct, ms = 0) {
     const task = this.current;
     if (!task) return;
-    this.results.push({ key: task.key, correct, ms });
+    this.results.push({ key: task.key, correct, ms, quiz: !!task.quiz });
     this.pos += 1;
+    if (task.quiz) return; // Quizfragen: keine Wiederholung, keine Extra-Karte
     if (correct) {
       this.streakWrong = 0;
       return;

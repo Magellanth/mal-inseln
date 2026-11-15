@@ -123,7 +123,16 @@ Das Kind tippt danach die richtige Lösung einmal selbst ein (aktives Abrufen), 
    - Das ist die gewünschte **gemischte Abfrage**: Sobald mehrere Reihen offen sind, mischt das Tagestraining über alle.
 2. **Reihe üben:** Das Kind tippt eine freigeschaltete Reihe an → 10 Karten dieser Reihe gemischt (beim ersten Mal Entdecker-Runde).
 3. **Reihen-Übersicht** *(ergänzt am 15.11. auf Wunsch)*: Ein Tipp auf eine offene Insel zeigt zuerst die ganze Reihe zum Durchlesen (`1 · 2 = 2` … `10 · 2 = 20`), darüber die Zählreihe zum Mitsprechen. Kernaufgaben (1·, 2·, 5·, 10·) sind markiert, ein Punkt je Aufgabe zeigt den Lernstand. „Ergebnisse abdecken“ ersetzt die Ergebnisse durch Fragezeichen, die sich einzeln aufdecken lassen. Von hier startet „Reihe üben“.
-4. **Rekordjagd** (ab 3 freigeschalteten Reihen): 60 Sekunden, so viele richtige Aufgaben wie möglich aus allen freigeschalteten Reihen. Nur gegen den **eigenen** Rekord. Freiwillig; der einzige Modus mit sichtbarer Uhr. Zählt auch fürs Lernmodell (Fächer werden aktualisiert).
+4. **Quizfragen** *(ergänzt am 15.11. auf Wunsch: „als kleine Beimischung, nicht ständig“)*: Ab und zu kommt statt einer Rechenaufgabe eine Frage mit drei Antworten zum Antippen. Sie übt, Ergebnisse einer Reihe wiederzuerkennen.
+   - **Wie oft:** Im Tagestraining 1–2 Fragen *zusätzlich* zu den 15 Aufgaben, nie als erste. Beim Üben einer einzelnen Reihe 1 Frage zu dieser Reihe. Keine in der Entdecker-Runde (auch nicht im Tagestraining am Entdecker-Tag) und keine in der Rekordjagd.
+   - **Fragen,** nur zu entdeckten Reihen, nie zur 1er-Reihe (dort passt jede Zahl bis 10):
+     - „Welche Zahl gehört in die 3er-Reihe?“ – eine Zahl ist ein Ergebnis der Reihe, zwei nicht.
+     - ab 3 entdeckten Reihen (ohne 1er) auch: „In welche Reihe gehört die 35?“ – drei Reihen zur Auswahl, genau eine enthält die Zahl. Die anderen beiden teilen die Zahl gar nicht (also nie „100: 2er, 5er oder 10er“ – 100 ist gerade, das wäre eine Falle).
+     - hat die Reihe Silber, auch: „Welche Zahl gehört **nicht** in die 4er-Reihe?“ – zwei Ergebnisse der Reihe, eine Zahl nicht.
+   - Es passt immer genau eine Antwort. „In der Reihe“ heißt: eines der Ergebnisse 1·n … 10·n. Falsche Zahlen sind nie Vielfache der Reihe (also auch nicht 33 bei der 3er-Reihe) und liegen oft knapp daneben (26 oder 28 neben 27).
+   - **Richtig** zählt fürs Tagesziel. **Falsch:** Die richtige Antwort leuchtet auf, darunter die Zählreihe mit den passenden Zahlen markiert; das Kind tippt die richtige Antwort an, dann geht es weiter.
+   - Quizfragen verändern **keine** Fächer und Stufen und auch nicht die „richtig hintereinander“-Serie. Eine falsche Quizantwort zählt aber als Fehler der Runde (keine „fehlerfreie Runde“).
+5. **Rekordjagd** (ab 3 freigeschalteten Reihen): 60 Sekunden, so viele richtige Aufgaben wie möglich aus allen freigeschalteten Reihen. Nur gegen den **eigenen** Rekord. Freiwillig; der einzige Modus mit sichtbarer Uhr. Zählt auch fürs Lernmodell (Fächer werden aktualisiert).
 
 ## 7. Motivation
 
@@ -134,7 +143,7 @@ Der Startbildschirm zeigt eine **Reise-Karte mit 10 Stationen** (eine pro Reihe,
 Ein **Stickeralbum** mit Seiten nach Themen. Rund 80 Sticker:
 - **Reihen-Sticker (40):** Jede Reihe hat ein eigenes Tier/Maskottchen; je Stufe ein Sticker (Bronze, Silber, Gold, Meister). Meister-Sticker sind **Glitzer-Sticker** (Holo-Schimmer).
 - **Tages-Sticker (~30):** Wer an einem Tag das Tagesziel erreicht (siehe 7.3), bekommt einen zufälligen, noch nicht gesammelten Sticker aus diesem Pool. Höchstens einer pro Tag; wurde die App vorher geschlossen, wird er beim nächsten Start nachgereicht. Sind alle gesammelt, zählt nur der Stempel.
-- **Besondere Sticker (~10):** z. B. erste Runde, erste fehlerfreie Runde, 10 / 25 richtig in Folge, 5 / 15 / 30 Übungstage, eine „Wackel-Aufgabe“ (≥ 3 Fehler) bis Fach 4 gebracht, neuer Rekord, alle Reihen freigeschaltet, alle Reihen Meister.
+- **Besondere Sticker (~10):** z. B. erste Runde, erste fehlerfreie Runde, 10 / 25 richtig in Folge, 5 / 15 / 30 Übungstage, eine „Wackel-Aufgabe“ (≥ 3 Fehler) bis Fach 4 gebracht, neuer Rekord, 10 Quizfragen richtig („Zahlen-Detektiv“), alle Reihen freigeschaltet, alle Reihen Meister.
 - Sticker werden **nur durch echtes Lernen** verdient, nie weggenommen.
 - Darstellung: Emoji im Sticker-Look (weißer Rand, Schatten, leicht gedreht) – bunt, kostenlos, keine Bilddateien. Neue Sticker kommen mit einer kleinen „Auspack“-Animation.
 

@@ -62,3 +62,15 @@ test('Backup mit Tippfehler → wirft, kein Stand', () => {
   assert.throws(() => decodeBackup(code.slice(0, code.length / 2), T));
   assert.throws(() => decodeBackup('hallo', T), /Sicherungscode/);
 });
+
+test('alter Stand ohne Quiz-Zähler bekommt sie mit 0, nichts geht verloren', () => {
+  const old = newState(T);
+  delete old.stats.quizRight;
+  delete old.stats.quizTotal;
+  old.stats.right = 42;
+  const store = mem({ [STORAGE_KEY]: JSON.stringify(old) });
+  const s = load(store, T);
+  assert.equal(s.stats.quizRight, 0);
+  assert.equal(s.stats.quizTotal, 0);
+  assert.equal(s.stats.right, 42);
+});

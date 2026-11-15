@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { dayNum, weekStart } from '../js/days.js';
 import {
   ROW_ORDER, newState, cardKey, parseKey, applyAnswer, rowStage,
-  unlockedRows, focusRow, manualUnlock, dueKeys, dayGoalReached, dayGoalTarget, dayProgress, recordRound,
+  unlockedRows, focusRow, manualUnlock, dueKeys, dayGoalReached, dayGoalTarget, dayProgress, recordRound, recordQuiz,
 } from '../js/model.js';
 
 const T = 20000; // beliebiger Tag
@@ -197,4 +197,28 @@ test('Statistik: Übungstag und Serie', () => {
   assert.equal(s.days[T].tasks, 3);
   assert.equal(s.stats.bestStreak, 2);
   assert.equal(s.stats.streak, 0);
+});
+
+test('Quizantwort: richtig zählt fürs Tagesziel, ändert aber keine Karten und keine Serie', () => {
+  const s = newState(T);
+  const cardsBefore = JSON.stringify(s.cards);
+  s.stats.streak = 4;
+  for (let i = 0; i < 29; i++) applyAnswer(s, cardKey((i % 10) + 1, 2), { correct: true, ms: 2000, today: T });
+  const cardsMid = JSON.stringify(s.cards);
+  const streak = s.stats.streak;
+  assert.notEqual(cardsMid, cardsBefore);
+  const wrong = recordQuiz(s, { correct: false, today: T });
+  assert.equal(wrong.goalReached, false);
+  assert.equal(s.days[T].right, 29);
+  assert.equal(s.days[T].tasks, 30);
+  assert.equal(s.stats.streak, streak);
+  const right = recordQuiz(s, { correct: true, today: T });
+  assert.equal(right.goalReached, true);
+  assert.ok(dayGoalReached(s, T));
+  assert.equal(s.days[T].right, 30);
+  assert.equal(s.stats.quizRight, 1);
+  assert.equal(s.stats.quizTotal, 2);
+  assert.equal(s.stats.streak, streak);
+  assert.equal(JSON.stringify(s.cards), cardsMid);
+  assert.equal(recordQuiz(s, { correct: true, today: T }).goalReached, false); // nur einmal melden
 });

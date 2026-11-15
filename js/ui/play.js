@@ -3,9 +3,10 @@
 import { h, ask, toast } from './dom.js';
 import { app, go, today, persist, onLeave } from './core.js';
 import { numpad, bindKeyboard, dotsEl, stonesEl } from './widgets.js';
-import { applyAnswer, parseKey, markDiscovered, recordRound } from '../model.js';
+import { applyAnswer, parseKey, markDiscovered, recordRound, recordQuiz } from '../model.js';
 import { buildDailyRound, buildRowRound, pickBlitzTask, easyPool, Round } from '../rounds.js';
 import { hintFor } from '../hints.js';
+import { quizExplain } from '../quiz.js';
 import { ROW_THEMES, syncStickers } from '../stickers.js';
 import * as sound from '../sound.js';
 
@@ -22,6 +23,25 @@ function typeInto(input, key) {
   if (input.length >= MAX_DIGITS) return input;
   if (input === '0') return key;
   return input + key;
+}
+
+function choiceLabel(q, value) {
+  return q.type === 'whichRow' ? `${value}er` : String(value);
+}
+
+function quizQuestion(q) {
+  if (q.type === 'whichRow') return [`In welche Reihe gehört die ${q.number}?`];
+  if (q.type === 'notMember') return ['Welche Zahl gehört ', h('strong', { class: 'not' }, 'nicht'), ` in die ${q.row}er-Reihe?`];
+  return [`Welche Zahl gehört in die ${q.row}er-Reihe?`];
+}
+
+// Zählreihe n, 2n … 10n in zwei Fünferreihen; die gesuchten Zahlen sind markiert.
+function countRowEl(n, mark) {
+  return h('div', { class: 'stones quiz-count', 'aria-label': `${n}er-Reihe: ${Array.from({ length: 10 }, (_, i) => (i + 1) * n).join(', ')}` },
+    Array.from({ length: 10 }, (_, i) => {
+      const x = (i + 1) * n;
+      return h('span', { class: `stone ${mark.includes(x) ? 'goal' : ''}`, 'aria-hidden': 'true' }, x);
+    }));
 }
 
 function leaveWithStickers() {
@@ -62,18 +82,21 @@ export function play(root, params) {
   onLeave(() => { left = true; });
 
   let input = '';
-  let phase = 'ask'; // ask → (fix) → nächste
+  let phase = 'ask'; // ask → (fix) → nächste; Quizfrage: quiz → (quizfix) → nächste
   let busy = false;
   let shownAt = 0;
   let firstMs = 0;
   let answerEl = null;
+  let choiceEls = [];
 
   function showTask() {
     const t = round.current;
-    const { k, n } = parseKey(t.key);
-    const [a, b] = t.swapped ? [n, k] : [k, n];
     bar.style.width = `${(round.done / round.total) * 100}%`;
     count.textContent = `${round.done + 1}/${round.total}`;
+    wrap.classList.toggle('quiz-mode', !!t.quiz);
+    if (t.quiz) return showQuiz(t.quiz);
+    const { k, n } = parseKey(t.key);
+    const [a, b] = t.swapped ? [n, k] : [k, n];
     answerEl = h('span', { class: 'answer empty' });
     taskBox.className = 'task card';
     taskBox.replaceChildren(
@@ -108,6 +131,71 @@ export function play(root, params) {
     busy = false;
   }
 
+  function showQuiz(q) {
+    choiceEls = q.choices.map((value, i) => h('button', {
+      class: 'choice',
+      type: 'button',
+      'aria-label': q.type === 'whichRow' ? `${value}er-Reihe` : String(value),
+      onclick: () => choose(i),
+    }, choiceLabel(q, value)));
+    taskBox.className = 'task card quiz';
+    taskBox.replaceChildren(
+      h('p', { class: 'quiz-kicker' }, 'Quizfrage'),
+      h('h2', { class: 'quiz-question' }, quizQuestion(q)),
+      h('div', { class: 'choices' }, choiceEls));
+    phase = 'quiz';
+    busy = false;
+    shownAt = performance.now();
+  }
+
+  function choose(i) {
+    if (busy) return;
+    const q = round.current.quiz;
+    const btn = choiceEls[i];
+    if (phase === 'quizfix') {
+      if (i !== q.answer) return;
+      busy = true;
+      btn.classList.remove('tap-me');
+      sound.play('fixed');
+      setTimeout(() => { if (left) return; round.submit(false, firstMs); next(); }, 450);
+      return;
+    }
+    const ms = performance.now() - shownAt;
+    const correct = i === q.answer;
+    const res = recordQuiz(s, { correct, today: today() });
+    summary.goalReached ||= res.goalReached;
+    persist();
+    busy = true;
+    if (correct) {
+      btn.classList.add('right');
+      live.textContent = 'Richtig!';
+      sound.play('right');
+      setTimeout(() => { if (left) return; round.submit(true, ms); next(); }, 650);
+    } else {
+      firstMs = ms;
+      btn.classList.add('wrong');
+      sound.play('wrong');
+      setTimeout(() => { if (!left) showQuizHelp(q, i); }, 420);
+    }
+  }
+
+  function showQuizHelp(q, picked) {
+    choiceEls.forEach((el, i) => {
+      if (i === q.answer) el.classList.add('right', 'tap-me');
+      else el.disabled = true;
+      if (i !== picked) el.classList.remove('wrong');
+    });
+    taskBox.append(h('div', { class: 'quiz-help' },
+      h('p', { class: 'hint-kicker' }, 'Schau mal:'),
+      h('p', { class: 'quiz-explain' }, quizExplain(q)),
+      countRowEl(q.row, q.mark),
+      h('p', { class: 'quiz-tap' }, 'Tipp die richtige Antwort an.')));
+    const explain = quizExplain(q).replace(/\.?$/, '.');
+    live.textContent = `Richtig ist ${choiceEls[q.answer].getAttribute('aria-label')}. ${explain} Tipp die richtige Antwort an.`;
+    phase = 'quizfix';
+    busy = false;
+  }
+
   function render() {
     answerEl.textContent = input;
     answerEl.classList.toggle('empty', input === '');
@@ -115,6 +203,10 @@ export function play(root, params) {
 
   function onKey(key) {
     if (busy) return;
+    if (phase === 'quiz' || phase === 'quizfix') {
+      if (/^[123]$/.test(key)) choose(Number(key) - 1);
+      return;
+    }
     if (key === 'ok') return submit();
     input = typeInto(input, key);
     render();

@@ -41,6 +41,7 @@ export const SPECIALS = [
   { id: 'sp-days30', emoji: '🏆', name: '30 Übungstage', how: 'An 30 Tagen das Tagesziel geschafft' },
   { id: 'sp-wackel', emoji: '💪', name: 'Wackel-Aufgabe besiegt', how: 'Eine schwere Aufgabe richtig sicher gemacht' },
   { id: 'sp-record', emoji: '⏱️', name: 'Neuer Rekord', how: 'Deinen Rekord in der Rekordjagd geknackt' },
+  { id: 'sp-quiz10', emoji: '🔍', name: 'Zahlen-Detektiv', how: '10 Quizfragen richtig beantwortet' },
   { id: 'sp-allopen', emoji: '🗺️', name: 'Weltenbummler', how: 'Alle zehn Reihen freigeschaltet' },
   { id: 'sp-allmaster', emoji: '💎', name: 'Einmaleins-Meister', how: 'Alle Reihen auf Meister', holo: true },
 ];
@@ -110,6 +111,7 @@ export function syncStickers(state, today, rng = Math.random, flags = {}) {
   if (days >= 30) give(state, 'sp-days30', today, out);
   if (Object.values(state.cards).some((c) => c.wrong >= 3 && c.box >= 4)) give(state, 'sp-wackel', today, out);
   if (flags.blitzRecord) give(state, 'sp-record', today, out);
+  if (state.stats.quizRight >= 10) give(state, 'sp-quiz10', today, out);
   if (unlockedRows(state).length === ROW_ORDER.length) give(state, 'sp-allopen', today, out);
   if (ROW_ORDER.every((n) => state.rows[n].stage >= 4)) give(state, 'sp-allmaster', today, out);
 

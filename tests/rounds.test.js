@@ -13,6 +13,9 @@ function seeded(seed = 1) {
   };
 }
 
+const cardsOf = (r) => r.tasks.filter((t) => !t.quiz);
+const quizzesOf = (r) => r.tasks.filter((t) => t.quiz);
+
 test('erste Runde = Entdecker 2er in Reihenfolge mit hop', () => {
   const s = newState(T);
   const r = buildDailyRound(s, T, seeded());
@@ -26,8 +29,8 @@ test('nur 10 Karten offen → Runde mit 10 verschiedenen Karten', () => {
   markDiscovered(s, 2);
   const r = buildDailyRound(s, T, seeded());
   assert.equal(r.discoverRow, null);
-  assert.equal(r.tasks.length, 10);
-  assert.equal(new Set(r.tasks.map((t) => t.key)).size, 10);
+  assert.equal(cardsOf(r).length, 10);
+  assert.equal(new Set(cardsOf(r).map((t) => t.key)).size, 10);
 });
 
 test('Entdecker-Runde plus höchstens 5 fällige Karten anderer Reihen', () => {
@@ -54,7 +57,7 @@ test('fällige Karten kommen zuerst rein (max 8), Fokus-Reihe danach, Länge 15'
   const due = dueKeys(s, T);
   assert.equal(due.length, 12);
   const r = buildDailyRound(s, T, seeded(7));
-  const keys = r.tasks.map((t) => t.key);
+  const keys = cardsOf(r).map((t) => t.key);
   assert.equal(keys.length, DAILY_SIZE);
   assert.equal(keys.filter((k) => due.includes(k)).length, 8);
   for (const k of due.slice(0, 8)) assert.ok(keys.includes(k), k);
@@ -70,7 +73,7 @@ test('nie dieselbe Karte zweimal in der Aufgabenliste', () => {
     for (const key of Object.keys(s.cards)) {
       if (rng() < 0.5) Object.assign(s.cards[key], { box: 1 + Math.floor(rng() * 5), due: T - Math.floor(rng() * 3) });
     }
-    const keys = buildDailyRound(s, T, rng).tasks.map((t) => t.key);
+    const keys = cardsOf(buildDailyRound(s, T, rng)).map((t) => t.key);
     assert.equal(new Set(keys).size, keys.length);
   }
 });
@@ -83,8 +86,8 @@ test('Reihe üben: Entdecker zuerst, danach gemischt', () => {
   markDiscovered(s, 2);
   const later = buildRowRound(s, 2, seeded(3));
   assert.equal(later.discoverRow, null);
-  assert.deepEqual([...later.tasks.map((t) => t.key)].sort(), [...rowKeys(2)].sort());
-  assert.notDeepEqual(later.tasks.map((t) => t.key), rowKeys(2));
+  assert.deepEqual([...cardsOf(later).map((t) => t.key)].sort(), [...rowKeys(2)].sort());
+  assert.notDeepEqual(cardsOf(later).map((t) => t.key), rowKeys(2));
 });
 
 test('swapped nie unter Gold, ab Gold manchmal', () => {
@@ -145,4 +148,62 @@ test('Rekordjagd: nie zweimal dieselbe Karte hintereinander, nur offene Reihen',
 
 test('cardKey stimmt mit rowKeys überein', () => {
   assert.equal(rowKeys(2)[6], cardKey(7, 2));
+});
+
+test('Quiz: keine Fragen in der Entdecker-Runde, auch nicht am Entdecker-Tag', () => {
+  const s = newState(T);
+  assert.equal(quizzesOf(buildDailyRound(s, T, seeded())).length, 0);
+  assert.equal(quizzesOf(buildRowRound(s, 2, seeded())).length, 0);
+  markDiscovered(s, 2);
+  for (const key of rowKeys(2)) Object.assign(s.cards[key], { box: 2, due: T });
+  s.rows[2].stage = 2;
+  manualUnlock(s, 10);
+  for (let seed = 1; seed <= 30; seed++) assert.equal(quizzesOf(buildDailyRound(s, T, seeded(seed))).length, 0);
+});
+
+test('Quiz: Tagestraining hat 1–2 Fragen zusätzlich, nie als erste oder zweite Aufgabe', () => {
+  const counts = new Set();
+  for (let seed = 1; seed <= 60; seed++) {
+    const s = newState(T);
+    manualUnlock(s, 10);
+    manualUnlock(s, 5);
+    for (const n of [2, 10, 5]) markDiscovered(s, n);
+    const r = buildDailyRound(s, T, seeded(seed));
+    const q = quizzesOf(r);
+    counts.add(q.length);
+    assert.ok(q.length >= 1 && q.length <= 2);
+    assert.equal(cardsOf(r).length, DAILY_SIZE);
+    r.tasks.forEach((t, i) => { if (t.quiz) assert.ok(i >= 2, `Quiz an Stelle ${i}`); });
+    if (q.length === 2) assert.notDeepEqual([q[0].quiz.type, q[0].quiz.row], [q[1].quiz.type, q[1].quiz.row]);
+  }
+  assert.deepEqual([...counts].sort(), [1, 2]);
+});
+
+test('Quiz: Reihe üben hat genau 1 Frage zu dieser Reihe, die 1er-Reihe keine', () => {
+  const s = newState(T);
+  markDiscovered(s, 2);
+  manualUnlock(s, 1);
+  markDiscovered(s, 1);
+  for (let seed = 1; seed <= 20; seed++) {
+    const r = buildRowRound(s, 2, seeded(seed));
+    assert.equal(quizzesOf(r).length, 1);
+    assert.equal(quizzesOf(r)[0].quiz.row, 2);
+    assert.equal(cardsOf(r).length, 10);
+    assert.equal(quizzesOf(buildRowRound(s, 1, seeded(seed))).length, 0);
+  }
+});
+
+test('Round: falsche Quizantwort wird nicht wiederholt und bringt keine Extra-Karte', () => {
+  const quiz = { type: 'member', row: 2, choices: [7, 8, 9], answer: 1, mark: [8] };
+  const tasks = [{ key: '7x8' }, { key: '6x8' }, { key: 'quiz', quiz }, { key: '9x8' }];
+  const round = new Round(tasks, { easyPool: ['10x2'], rng: seeded(2) });
+  round.submit(true);
+  round.submit(false); // 6x8 falsch → kommt wieder
+  const before = round.total;
+  assert.ok(round.current.quiz);
+  round.submit(false);
+  assert.equal(round.total, before);
+  assert.notEqual(round.current.key, '10x2');
+  assert.equal(round.wrongCount, 2);
+  assert.ok(round.results.at(-1).quiz);
 });

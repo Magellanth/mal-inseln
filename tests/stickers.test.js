@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newState, cardKey, applyAnswer, recordRound } from '../js/model.js';
+import { newState, cardKey, applyAnswer, recordRound, recordQuiz } from '../js/model.js';
 import { STICKERS, syncStickers, stickersInGroup } from '../js/stickers.js';
 import { weekStart } from '../js/days.js';
 
@@ -101,4 +101,14 @@ test('alle Tages-Sticker gesammelt → kein Absturz, kein Duplikat', () => {
   reachGoal(s, T);
   const got = syncStickers(s, T, () => 0);
   assert.equal(got.filter((id) => id.startsWith('day-')).length, 0);
+});
+
+test('Zahlen-Detektiv nach 10 richtigen Quizfragen, falsche zählen nicht', () => {
+  const s = newState(T);
+  for (let i = 0; i < 9; i++) recordQuiz(s, { correct: true, today: T });
+  for (let i = 0; i < 5; i++) recordQuiz(s, { correct: false, today: T });
+  assert.ok(!syncStickers(s, T, () => 0).includes('sp-quiz10'));
+  recordQuiz(s, { correct: true, today: T });
+  assert.ok(syncStickers(s, T, () => 0).includes('sp-quiz10'));
+  assert.ok(STICKERS.some((x) => x.id === 'sp-quiz10' && x.group === 'special'));
 });

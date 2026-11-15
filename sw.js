@@ -1,7 +1,7 @@
 // Service Worker: hält die App offline verfügbar. Fasst den Spielstand (localStorage) nie an.
 // Bei jedem Update VERSION erhöhen – dann lädt das Handy alle Dateien gemeinsam neu.
 
-const VERSION = 'mal-inseln-v3';
+const VERSION = 'mal-inseln-v4';
 const FONT_CACHE = 'mal-inseln-fonts';
 
 const ASSETS = [
@@ -18,6 +18,7 @@ const ASSETS = [
   'js/fx.js',
   'js/hints.js',
   'js/model.js',
+  'js/quiz.js',
   'js/rounds.js',
   'js/sound.js',
   'js/stickers.js',
