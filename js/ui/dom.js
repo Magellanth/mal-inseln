@@ -19,6 +19,13 @@ export function h(tag, props = {}, ...children) {
   return el;
 }
 
+// Ersetzt den Inhalt wie replaceChildren, überspringt aber false/null wie add()
+// (das native replaceChildren schreibt ein false als Text „false“ in die Seite).
+export function fill(el, ...children) {
+  el.replaceChildren();
+  add(el, ...children);
+}
+
 export function add(el, ...children) {
   for (const child of children.flat(Infinity)) {
     if (child === null || child === undefined || child === false) continue;

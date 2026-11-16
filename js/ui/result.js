@@ -1,6 +1,6 @@
 // Ergebnis nach einer Runde: Punkte, neue Stufen und Inseln, Sticker-Tüten zum Aufreißen.
 
-import { h } from './dom.js';
+import { h, fill } from './dom.js';
 import { app, go, today } from './core.js';
 import { stickerEl, medal } from './widgets.js';
 import { goalBar } from './home.js';
@@ -38,7 +38,7 @@ function pack(id) {
     if (el.classList.contains('opened')) return;
     el.classList.add('opened');
     el.setAttribute('aria-label', `${sticker.name} bekommen`);
-    el.replaceChildren(stickerEl(sticker), h('span', { class: 'pack-name' }, sticker.name));
+    fill(el, stickerEl(sticker), h('span', { class: 'pack-name' }, sticker.name));
     sound.play('sticker');
   });
   return el;

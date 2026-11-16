@@ -1,6 +1,6 @@
 // Eltern-Bereich hinter einer Rechenaufgabe: Lernstand, Problemaufgaben, Freischalten, Sicherungscode, Einstellungen.
 
-import { h, add, ask, toast } from './dom.js';
+import { h, add, fill, ask, toast } from './dom.js';
 import { app, go, today, persist } from './core.js';
 import { ROW_ORDER, STAGE_NAMES, rowKeys, parseKey, manualUnlock, goalDays, newState, DAY_GOAL_OPTIONS, dayGoalTarget } from '../model.js';
 import { ROW_THEMES, syncStickers } from '../stickers.js';
@@ -113,7 +113,7 @@ function backup(s) {
     persist();
     const area = h('textarea', { class: 'code', readonly: true, 'aria-label': 'Sicherungscode' });
     area.value = code;
-    out.replaceChildren(
+    fill(out,
       h('p', {}, 'Diesen Code irgendwo sicher aufheben, z. B. als Nachricht an dich selbst oder als Notiz.'),
       area,
       h('div', { class: 'btn-row' },

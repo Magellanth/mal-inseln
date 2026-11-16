@@ -1,6 +1,6 @@
 // Aufgaben-Bildschirm: Tagestraining, Reihe üben (inkl. Entdecker-Runde) und Rekordjagd.
 
-import { h, ask, toast } from './dom.js';
+import { h, fill, ask, toast } from './dom.js';
 import { app, go, today, persist, onLeave } from './core.js';
 import { numpad, bindKeyboard, dotsEl, stonesEl } from './widgets.js';
 import { applyAnswer, parseKey, markDiscovered, recordRound, recordQuiz } from '../model.js';
@@ -99,7 +99,7 @@ export function play(root, params) {
     const [a, b] = t.swapped ? [n, k] : [k, n];
     answerEl = h('span', { class: 'answer empty' });
     taskBox.className = 'task card';
-    taskBox.replaceChildren(
+    fill(taskBox,
       h('p', { class: 'label' }, t.easy ? 'Die kennst du schon!' : label),
       equation(a, b, answerEl),
       t.hop && stonesEl(k, n));
@@ -115,7 +115,7 @@ export function play(root, params) {
     const close = Math.abs(given - k * n) <= Math.max(2, n);
     answerEl = h('span', { class: 'answer empty' });
     taskBox.className = 'task';
-    taskBox.replaceChildren(h('div', { class: 'card hint' },
+    fill(taskBox, h('div', { class: 'card hint' },
       h('div', { class: 'hint-top' },
         h('p', { class: 'hint-kicker' }, close ? 'Fast! Schau mal:' : 'Schau mal:'),
         h('p', { class: 'hint-solution' }, `${a} · ${b} = ${k * n}`)),
@@ -139,7 +139,7 @@ export function play(root, params) {
       onclick: () => choose(i),
     }, choiceLabel(q, value)));
     taskBox.className = 'task card quiz';
-    taskBox.replaceChildren(
+    fill(taskBox,
       h('p', { class: 'quiz-kicker' }, 'Quizfrage'),
       h('h2', { class: 'quiz-question' }, quizQuestion(q)),
       h('div', { class: 'choices' }, choiceEls));
@@ -314,7 +314,7 @@ function blitz(root) {
   root.append(wrap);
   onLeave(bindKeyboard(onKey));
 
-  taskBox.replaceChildren(
+  fill(taskBox,
     h('h2', {}, 'Rekordjagd'),
     h('p', { class: 'label' }, prevRecord
       ? `60 Sekunden, so viele Aufgaben wie möglich. Dein Rekord: ${prevRecord}.`
@@ -347,7 +347,7 @@ function blitz(root) {
     const { k, n } = parseKey(current.key);
     const [a, b] = current.swapped ? [n, k] : [k, n];
     answerEl = h('span', { class: 'answer empty' });
-    taskBox.replaceChildren(equation(a, b, answerEl));
+    fill(taskBox, equation(a, b, answerEl));
     input = '';
     busy = false;
     shownAt = performance.now();
