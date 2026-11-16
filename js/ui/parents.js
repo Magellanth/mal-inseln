@@ -2,7 +2,10 @@
 
 import { h, add, fill, ask, toast } from './dom.js';
 import { app, go, today, persist } from './core.js';
-import { ROW_ORDER, STAGE_NAMES, rowKeys, parseKey, manualUnlock, goalDays, newState, DAY_GOAL_OPTIONS, dayGoalTarget } from '../model.js';
+import {
+  ROW_ORDER, STAGE_NAMES, rowKeys, parseKey, manualUnlock, goalDays, newState, DAY_GOAL_OPTIONS, dayGoalTarget,
+  SPEED_OPTIONS, speedLimit, tempoRecheck,
+} from '../model.js';
 import { ROW_THEMES, syncStickers } from '../stickers.js';
 import { encodeBackup, decodeBackup } from '../storage.js';
 import * as sound from '../sound.js';
@@ -90,19 +93,57 @@ function islands(s) {
       h('span', {}, h('i', { style: { background: 'var(--leaf)' } }), 'sitzt fest')));
 }
 
+const seconds = (ms) => Math.round(ms / 1000);
+
+// Fehler und zu langsame Antworten (zuletzt über der Zeitgrenze, z. B. hochgezählt).
 function weak(s) {
+  const limit = speedLimit(s);
+  const isSlow = (c) => c.box >= 1 && c.lastMs !== null && c.lastMs > limit;
   const list = Object.entries(s.cards)
-    .filter(([key, c]) => c.wrong > 0 && s.rows[parseKey(key).n].open)
-    .sort(([, a], [, b]) => b.wrong - a.wrong || a.box - b.box)
+    .filter(([key, c]) => (c.wrong > 0 || isSlow(c)) && s.rows[parseKey(key).n].open)
+    .sort(([, a], [, b]) => b.wrong - a.wrong || (isSlow(b) ? b.lastMs : 0) - (isSlow(a) ? a.lastMs : 0))
     .slice(0, 12);
   return h('section', { class: 'card' },
     h('h2', {}, 'Hängt noch'),
     list.length
       ? h('div', { class: 'weak-list' }, list.map(([key, c]) => {
         const { k, n } = parseKey(key);
-        return h('span', {}, h('b', {}, `${k} · ${n}`), ` ${c.wrong}× falsch`);
+        const notes = [c.wrong > 0 && `${c.wrong}× falsch`, isSlow(c) && `zuletzt ${seconds(c.lastMs)} s`].filter(Boolean);
+        return h('span', {}, h('b', {}, `${k} · ${n}`), ` ${notes.join(', ')}`);
       }))
-      : h('p', { class: 'soft' }, 'Bisher keine Fehler. Die Aufgaben mit den meisten Fehlern erscheinen hier.'));
+      : h('p', { class: 'soft' }, 'Bisher keine Fehler und nichts zu Langsames. Aufgaben mit Fehlern oder langer Antwortzeit erscheinen hier.'));
+}
+
+function tempo(s) {
+  const check = async () => {
+    const t = today();
+    const preview = tempoRecheck(s, t);
+    if (!preview.demoted.length && !preview.locked.length) {
+      toast('Alles blitzschnell genug – es ändert sich nichts.');
+      return;
+    }
+    const parts = [
+      preview.demoted.length === 1
+        ? '1 Aufgabe muss wieder blitzschnell gewusst werden.'
+        : `${preview.demoted.length} Aufgaben müssen wieder blitzschnell gewusst werden.`,
+      preview.locked.length
+        ? `Wieder gesperrt: ${preview.locked.map((n) => `${n}er`).join(', ')}.`
+        : 'Keine Insel wird gesperrt.',
+      preview.focus !== null && `Weiter geübt wird die ${preview.focus}er-Reihe.`,
+      'Sticker bleiben. Tipp: vorher einen Sicherungscode erstellen.',
+    ].filter(Boolean);
+    const yes = await ask({ title: 'Lernstand anpassen?', text: parts.join(' '), ok: 'Anpassen', danger: true });
+    if (!yes) return;
+    tempoRecheck(s, t, { apply: true });
+    persist();
+    go('parents', { open: true });
+    toast('Lernstand angepasst.');
+  };
+  return h('section', { class: 'card' },
+    h('h2', {}, 'Inseln nach Tempo prüfen'),
+    h('p', {}, `Wendet die Zeitgrenze (${seconds(speedLimit(s))} s) auf den bisherigen Lernstand an: Aufgaben, deren letzte Antwort länger gedauert hat, müssen wieder blitzschnell gewusst werden. Inseln ohne Silber werden wieder gesperrt – bis auf eine zum Weiterüben.`),
+    h('p', { class: 'soft', style: { fontSize: '15px' } }, 'Vor dem Anpassen zeigt die App, was sich ändert. Sticker bleiben.'),
+    h('button', { class: 'btn btn-small btn-sun', onclick: check }, 'Jetzt prüfen'));
 }
 
 function backup(s) {
@@ -201,8 +242,26 @@ function settings(s) {
       toast(`Tagesziel: ${value} richtige Aufgaben.`);
     },
   }, String(value)));
+  const speedButtons = SPEED_OPTIONS.map((value) => h('button', {
+    class: `btn btn-small ${speedLimit(s) === value ? 'btn-sun' : ''}`,
+    'aria-pressed': String(speedLimit(s) === value),
+    onclick: () => {
+      s.settings.speedMs = value;
+      persist();
+      speedButtons.forEach((b, i) => {
+        const on = SPEED_OPTIONS[i] === value;
+        b.classList.toggle('btn-sun', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      toast(`Blitzschnell heißt jetzt: bis ${seconds(value)} Sekunden.`);
+    },
+  }, `${seconds(value)} s`));
   return h('section', { class: 'card' },
     h('h2', {}, 'Einstellungen'),
+    h('div', { style: { display: 'grid', gap: '8px' } },
+      h('p', { style: { fontWeight: 700 } }, 'Blitzschnell: Zeit bis zur Antwort'),
+      h('p', { class: 'soft', style: { fontSize: '15px' } }, 'Nur eine richtige Antwort in dieser Zeit (samt Eintippen) zählt als „sitzt“. Langsamere Antworten zählen fürs Tagesziel, die Aufgabe wird aber weiter geübt.'),
+      h('div', { class: 'btn-row', role: 'group', 'aria-label': 'Zeit für blitzschnell' }, speedButtons)),
     h('div', { style: { display: 'grid', gap: '8px' } },
       h('p', { style: { fontWeight: 700 } }, 'Tagesziel: richtige Aufgaben pro Tag'),
       h('p', { class: 'soft', style: { fontSize: '15px' } }, 'Eine Runde hat 15 Aufgaben. 30 sind etwa zwei Runden (6–8 Minuten). Ein schon erreichtes Tagesziel bleibt erreicht.'),
@@ -263,6 +322,7 @@ export function parents(root, params = {}) {
       overview(s),
       islands(s),
       weak(s),
+      tempo(s),
       backup(s),
       settings(s),
       reset(),

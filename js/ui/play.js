@@ -4,7 +4,7 @@ import { h, fill, ask, toast } from './dom.js';
 import { app, go, today, persist, onLeave } from './core.js';
 import { numpad, bindKeyboard, dotsEl, stonesEl } from './widgets.js';
 import { applyAnswer, parseKey, markDiscovered, recordRound, recordQuiz } from '../model.js';
-import { buildDailyRound, buildRowRound, pickBlitzTask, easyPool, Round } from '../rounds.js';
+import { buildDailyRound, buildRowRound, pickBlitzTask, easyPool, Round, MAX_REPEATS } from '../rounds.js';
 import { hintFor } from '../hints.js';
 import { quizExplain } from '../quiz.js';
 import { ROW_THEMES, syncStickers } from '../stickers.js';
@@ -57,7 +57,7 @@ export function play(root, params) {
   const { mode, row } = params;
   const plan = mode === 'daily' ? buildDailyRound(s, today()) : buildRowRound(s, row);
   const round = new Round(plan.tasks, { easyPool: easyPool(s) });
-  const summary = { mode, row, discoverRow: plan.discoverRow, stageUps: [], unlocked: [], goalReached: false };
+  const summary = { mode, row, discoverRow: plan.discoverRow, stageUps: [], unlocked: [], goalReached: false, cards: 0, fast: 0 };
   const worldRow = plan.discoverRow ?? (mode === 'row' ? row : null);
 
   let label;
@@ -80,6 +80,10 @@ export function play(root, params) {
   onLeave(bindKeyboard(onKey));
   let left = false; // Bildschirm verlassen: ausstehende Timer dürfen nichts mehr tun
   onLeave(() => { left = true; });
+  // War die App im Hintergrund, startet die Zeit für „blitzschnell“ neu.
+  const onVisible = () => { if (!document.hidden && !busy) shownAt = performance.now(); };
+  document.addEventListener('visibilitychange', onVisible);
+  onLeave(() => document.removeEventListener('visibilitychange', onVisible));
 
   let input = '';
   let phase = 'ask'; // ask → (fix) → nächste; Quizfrage: quiz → (quizfix) → nächste
@@ -236,17 +240,34 @@ export function play(root, params) {
 
     const ms = performance.now() - shownAt;
     const correct = value === k * n;
-    const res = applyAnswer(s, t.key, { correct, ms, today: today() });
+    const res = applyAnswer(s, t.key, { correct, ms, today: today(), repeat: !!t.repeat });
     summary.stageUps.push(...res.stageUps);
     summary.unlocked.push(...res.unlocked);
     summary.goalReached ||= res.goalReached;
+    summary.cards += 1;
+    if (res.fast) summary.fast += 1;
     persist();
     busy = true;
     if (correct) {
       answerEl.classList.add('right');
-      live.textContent = 'Richtig!';
       sound.play('right');
-      setTimeout(() => { if (left) return; round.submit(true, ms); next(); }, 550);
+      let delay = 550;
+      if (res.fast) {
+        taskBox.append(h('p', { class: 'feedback fast', 'aria-hidden': 'true' }, '⚡ Blitzschnell!'));
+        live.textContent = 'Richtig! Blitzschnell.';
+        delay = 750;
+      } else if (res.slow) {
+        const comesAgain = (round.repeats[t.key] ?? 0) < MAX_REPEATS;
+        const text = comesAgain
+          ? 'Richtig! Die kommt gleich nochmal – schaffst du sie blitzschnell?'
+          : 'Richtig! Nächstes Mal schaffst du sie blitzschnell.';
+        taskBox.append(h('p', { class: 'feedback slow', 'aria-hidden': 'true' }, text));
+        live.textContent = text;
+        delay = 1800;
+      } else {
+        live.textContent = 'Richtig!';
+      }
+      setTimeout(() => { if (left) return; round.submit(true, ms, { again: res.slow }); next(); }, delay);
     } else {
       firstMs = ms;
       answerEl.classList.add('wrong');
@@ -337,7 +358,7 @@ function blitz(root) {
     requestAnimationFrame(tick);
   }
 
-  const onVisible = () => { last = performance.now(); };
+  const onVisible = () => { last = performance.now(); shownAt = performance.now(); };
   document.addEventListener('visibilitychange', onVisible);
   onLeave(() => { running = false; document.removeEventListener('visibilitychange', onVisible); });
 

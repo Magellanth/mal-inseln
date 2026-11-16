@@ -207,3 +207,23 @@ test('Round: falsche Quizantwort wird nicht wiederholt und bringt keine Extra-Ka
   assert.equal(round.wrongCount, 2);
   assert.ok(round.results.at(-1).quiz);
 });
+
+test('Round: langsam-richtig kommt 2–3 Plätze später nochmal, als Wiederholung, ohne Fehler', () => {
+  const tasks = ['1x2', '2x2', '3x2', '4x2', '5x2', '6x2'].map((key) => ({ key, swapped: false, hop: false }));
+  const round = new Round(tasks, { easyPool: ['10x2'], rng: seeded(5) });
+  round.submit(true, 9000, { again: true });
+  const next = round.queue.slice(round.pos);
+  const idx = next.findIndex((t) => t.key === '1x2');
+  assert.ok(idx === 2 || idx === 3, `idx=${idx}`);
+  assert.equal(next[idx].repeat, true);
+  assert.equal(round.wrongCount, 0);
+  round.submit(true, 9000, { again: true }); // zweite langsame Antwort: keine Extra-Karte wie nach 2 Fehlern
+  assert.notEqual(round.current.key, '10x2');
+  assert.equal(round.total, 8);
+});
+
+test('Round: falsch beantwortete Karte kommt als Wiederholung zurück', () => {
+  const round = new Round(['1x2', '2x2', '3x2', '4x2'].map((key) => ({ key })), { rng: seeded(5) });
+  round.submit(false);
+  assert.ok(round.queue.slice(round.pos).some((t) => t.key === '1x2' && t.repeat));
+});

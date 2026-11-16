@@ -5,7 +5,9 @@ import { weekStart } from './days.js';
 
 export const ROW_ORDER = [2, 10, 5, 1, 4, 8, 3, 6, 9, 7];
 export const INTERVALS = { 1: 1, 2: 1, 3: 3, 4: 7, 5: 21 };
-export const FAST_MS = 5000;
+// „Blitzschnell“: richtige Antwort samt Eintippen innerhalb dieser Zeit. Nur dann steigt eine Karte über Fach 1.
+export const SPEED_OPTIONS = [3000, 4000, 6000];
+export const SPEED_DEFAULT = 4000;
 export const MAX_BOX = 5;
 export const STAGE_MIN_BOX = { 1: 1, 2: 2, 3: 4, 4: 5 };
 export const STAGE_NAMES = ['Neu', 'Bronze', 'Silber', 'Gold', 'Meister'];
@@ -50,7 +52,7 @@ export function newState(today) {
     days: {},
     stats: { tasks: 0, right: 0, streak: 0, bestStreak: 0, rounds: 0, perfectRounds: 0, quizRight: 0, quizTotal: 0 },
     records: { blitz: 0 },
-    settings: { sound: true, installHint: true, dayGoal: DAY_GOAL_DEFAULT },
+    settings: { sound: true, installHint: true, dayGoal: DAY_GOAL_DEFAULT, speedMs: SPEED_DEFAULT },
     backupDay: null,
   };
   openRow(state, ROW_ORDER[0], false);
@@ -205,7 +207,14 @@ export function recordRound(state, { mode, perfect, today }) {
   if (mode === 'daily') day.daily += 1;
 }
 
-export function applyAnswer(state, key, { correct, ms, today }) {
+export function speedLimit(state) {
+  const ms = Number(state.settings?.speedMs);
+  return SPEED_OPTIONS.includes(ms) ? ms : SPEED_DEFAULT;
+}
+
+// repeat: Wiederholung derselben Karte in derselben Runde – nur zum Üben, hebt nichts an.
+// Ergebnis: fast = richtig und blitzschnell; slow = richtig, aber zu langsam für eine schon gelernte Karte.
+export function applyAnswer(state, key, { correct, ms, today, repeat = false }) {
   const card = state.cards[key];
   const { n } = parseKey(key);
   const oldBox = card.box;
@@ -213,6 +222,8 @@ export function applyAnswer(state, key, { correct, ms, today }) {
   day.tasks += 1;
   state.stats.tasks += 1;
   card.lastMs = ms;
+  const fast = correct && ms <= speedLimit(state);
+  const slow = correct && !fast && oldBox >= 1;
 
   if (correct) {
     card.right += 1;
@@ -220,13 +231,18 @@ export function applyAnswer(state, key, { correct, ms, today }) {
     state.stats.right += 1;
     state.stats.streak += 1;
     state.stats.bestStreak = Math.max(state.stats.bestStreak, state.stats.streak);
-    const fast = ms <= FAST_MS;
-    let newBox = oldBox;
-    if (oldBox < 2) newBox = oldBox + 1;
-    else if (fast && isDue(card, today)) newBox = Math.min(oldBox + 1, MAX_BOX);
-    if (newBox !== oldBox || (oldBox === MAX_BOX && isDue(card, today) && fast)) {
-      card.box = newBox;
-      card.due = today + INTERVALS[newBox];
+    if (slow) {
+      // gewusst, aber noch nicht auswendig (z. B. hochgezählt): zurück auf Fach 1, heute nochmal
+      card.box = 1;
+      card.due = today;
+    } else if (!repeat) {
+      let newBox = oldBox;
+      if (oldBox < 2) newBox = oldBox + 1;
+      else if (isDue(card, today)) newBox = Math.min(oldBox + 1, MAX_BOX);
+      if (newBox !== oldBox || (oldBox === MAX_BOX && isDue(card, today))) {
+        card.box = newBox;
+        card.due = today + INTERVALS[newBox];
+      }
     }
   } else {
     card.wrong += 1;
@@ -238,7 +254,30 @@ export function applyAnswer(state, key, { correct, ms, today }) {
   const goalReached = checkDayGoal(state, day);
   const stageUps = updateStage(state, n);
   const unlocked = checkUnlocks(state);
-  return { oldBox, newBox: card.box, stageUps, unlocked, goalReached };
+  return { oldBox, newBox: card.box, fast, slow, stageUps, unlocked, goalReached };
+}
+
+// Tempo-Prüfung im Eltern-Bereich: wendet die Zeitgrenze nachträglich an.
+// Karten ab Fach 2 mit zu langsamer letzter Antwort → Fach 1 (fällig heute); Stufen sinken entsprechend
+// (einzige Stelle, an der eine Stufe sinkt). Offen bleiben die 2er, von Hand freigeschaltete Reihen, alle mit Silber
+// und von den übrigen nur die erste in der Reihenfolge. Ohne apply: nur Vorschau, der Stand bleibt unverändert.
+export function tempoRecheck(state, today, { apply = false } = {}) {
+  const s = apply ? state : JSON.parse(JSON.stringify(state)); // Vorschau auf einer Kopie
+  const limit = speedLimit(s);
+  const demoted = [];
+  for (const [key, card] of Object.entries(s.cards)) {
+    if (card.box >= 2 && card.lastMs !== null && card.lastMs > limit) {
+      card.box = 1;
+      card.due = today;
+      demoted.push(key);
+    }
+  }
+  for (const n of ROW_ORDER) s.rows[n].stage = Math.min(s.rows[n].stage, computedStage(s, n));
+  const weak = unlockedRows(s).filter((n) => n !== ROW_ORDER[0] && !s.rows[n].manual && s.rows[n].stage < 2);
+  const firstWeak = unlockedRows(s).find((n) => !s.rows[n].manual && s.rows[n].stage < 2);
+  const locked = weak.filter((n) => n !== firstWeak);
+  for (const n of locked) s.rows[n].open = false;
+  return { demoted, locked, focus: focusRow(s) };
 }
 
 // Meldet true genau einmal: in dem Moment, in dem das Tagesziel erreicht wird.

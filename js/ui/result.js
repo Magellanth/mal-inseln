@@ -12,7 +12,7 @@ import * as sound from '../sound.js';
 
 const STAGE_TEXT = {
   1: 'Jede Aufgabe einmal geschafft.',
-  2: 'Das sitzt schon sicher.',
+  2: 'Jede Aufgabe blitzschnell gewusst.',
   3: 'Profi! Das hält auch nach Tagen.',
   4: 'Meister! Das sitzt bombenfest.',
 };
@@ -63,7 +63,8 @@ export function result(root, p) {
     head = h('section', { class: 'card result-head' },
       h('h1', {}, p.discoverRow ? `Die ${p.discoverRow}er-Insel ist entdeckt!` : 'Runde geschafft!'),
       h('p', { class: 'score' }, `${p.right} von ${p.total}`),
-      h('p', {}, p.perfect ? 'Alles richtig – stark!' : 'Aufgaben richtig. Was noch wackelt, kommt wieder dran.'));
+      h('p', {}, p.perfect ? 'Alles richtig – stark!' : 'Aufgaben richtig. Was noch wackelt, kommt wieder dran.'),
+      !p.discoverRow && p.cards > 0 && h('p', { class: 'fast-line' }, `⚡ ${p.fast} von ${p.cards} blitzschnell`));
   }
 
   const t = today();

@@ -67,14 +67,18 @@ Jede Karte liegt in einem Fach 0–5. Das Fach bestimmt, wann sie wieder drankom
 |---|---|---|
 | 0 | neu, noch nie richtig | – (wird eingeführt) |
 | 1 | gerade gelernt / zuletzt falsch | gleiche Runde, dann am nächsten Tag |
-| 2 | zweimal richtig (auch langsam) | 1 Tag |
+| 2 | gelernt und dann blitzschnell gewusst | 1 Tag |
 | 3 | an einem späteren Tag wieder gewusst | 3 Tage |
 | 4 | | 7 Tage |
 | 5 | sitzt fest | 21 Tage (Pflege-Wiederholung) |
 
 Regeln:
-- **Richtig & flott** (≤ 5 s vom Erscheinen bis zum Bestätigen): ein Fach hoch.
-- **Richtig, aber langsam** (> 5 s): höchstens bis Fach 2; darüber bleibt die Karte, wo sie ist (gewusst, aber noch nicht automatisiert). Kein negatives Feedback für langsam – die Zeit wird **unsichtbar** gemessen.
+*(Geändert am 16.11. auf Wunsch: „Nur was man nahezu sofort weiß, weil man es auswendig kann, kann man wirklich.“ Vorher reichte für Fach 2 auch eine langsame Antwort – ein Kind, das hochzählt, kam so bis Silber.)*
+- **Zeitgrenze „blitzschnell“:** Antwort samt Eintippen innerhalb von **4 s** bestätigt (im Eltern-Bereich 3 / 4 / 6 s). Ist die App zwischendurch im Hintergrund, startet die Zeit neu.
+- **Richtig & blitzschnell:** ein Fach hoch (über Fach 2 nur, wenn fällig – siehe unten).
+- **Richtig, aber langsam:** Aus Fach 0 geht es auf Fach 1 (kennengelernt, z. B. mit Hüpf-Hilfe). Aus Fach 1 und höher zurück auf **Fach 1**, fällig heute – gewusst, aber noch nicht auswendig. Kein Fehler: zählt fürs Tagesziel und die Richtig-Serie, kein Hilfe-Bildschirm. In derselben Runde kommt die Karte 2–3 Aufgaben später noch einmal.
+- **Sichtbar fürs Kind, ohne Uhr:** Während der Aufgabe läuft keine Uhr. Danach: blitzschnell → „⚡ Blitzschnell!“; langsam (Karte war schon gelernt) → „Richtig! Die kommt gleich nochmal – schaffst du sie blitzschnell?“. Am Rundenende „9 von 15 blitzschnell ⚡“.
+- **Wiederholungen in derselben Runde** (nach falsch oder langsam) sind nur zum Üben: Sie heben keine Karte an, sonst würde das Kurzzeitgedächtnis von eben als „auswendig“ zählen. Hochgestuft wird erst in einer späteren Runde.
 - **Falsch:** zurück auf Fach 1, kommt in derselben Runde 2–3 Aufgaben später wieder (höchstens 2-mal pro Runde, damit nichts endlos kreist).
 - **Abstand schützt vor Pauken:** Über Fach 2 hinaus steigt eine Karte nur, wenn sie **fällig** war (Wartezeit abgelaufen). Wer an einem Tag zehnmal die 7er übt, kommt also schnell auf „Silber“, aber nicht auf „Gold“. Gold und Meister beweisen, dass es über Tage hält.
 - Tageswechsel = lokales Kalenderdatum.
@@ -84,7 +88,7 @@ Regeln:
 | Stufe | Bedingung (alle 10 Karten der Reihe) | Typische Dauer |
 |---|---|---|
 | Entdeckt (Bronze) | jede mindestens 1× richtig (Fach ≥ 1) | 1. Runde |
-| Sicher (Silber) | Fach ≥ 2 | 1–2 Runden → **schaltet nächste Reihe frei** |
+| Sicher (Silber) | Fach ≥ 2, also jede Aufgabe einmal blitzschnell gewusst | ca. 3–5 Runden → **schaltet nächste Reihe frei** |
 | Profi (Gold) | Fach ≥ 4 | ca. 1 Woche |
 | Meister (Kristall) | Fach 5 | ca. 2–3 Wochen |
 
@@ -168,6 +172,8 @@ Inhalt:
 - „Hängt noch“: die Karten mit den meisten Fehlern / niedrigsten Fächern.
 - Reihen von Hand freischalten. Eine so geöffnete Reihe behält ihren Platz auf der Reise-Karte und wird Fokus-Reihe (6.1). Die automatische Freischaltung nimmt immer die nächste noch gesperrte Reihe in der Reihenfolge aus 5.4 und überspringt bereits offene. Ihre Karten starten normal in Fach 0 (inkl. Entdecker-Runde).
 - Sicherungscode erzeugen / einspielen.
+- **Tempo** *(ergänzt am 16.11.)*: Zeitgrenze für „blitzschnell“ (3 / 4 / 6 s). „Hängt noch“ zeigt auch langsame Aufgaben mit der letzten Zeit („7 · 8 – zuletzt 14 s“).
+- **Inseln nach Tempo neu prüfen** *(ergänzt am 16.11. auf Wunsch)*: Wendet die Zeitgrenze nachträglich auf den Lernstand an. Jede Karte ab Fach 2, deren letzte Antwort länger als die Zeitgrenze dauerte, geht auf Fach 1 (fällig heute); die Stufen der Reihen werden neu berechnet – das ist die einzige Stelle, an der eine Stufe sinkt. Danach bleiben offen: die erste Reihe (2er), von Hand freigeschaltete Reihen und alle Reihen, die weiter Silber haben. Von den übrigen bleibt nur die erste in der Reihenfolge offen (zum Weiterüben), die anderen werden wieder gesperrt. Gesperrte Reihen behalten ihre Karten und gelten weiter als entdeckt. Sticker bleiben. Vor dem Anwenden zeigt die App, was sich ändert, und fragt nach.
 - Name des Kindes ändern, Töne an/aus, alles zurücksetzen (mit Rückfrage).
 
 ## 9. Bildschirme (grob)

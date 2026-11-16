@@ -156,25 +156,24 @@ export class Round {
     return this.results.filter((r) => !r.correct).length;
   }
 
-  submit(correct, ms = 0) {
+  // again: richtig, aber zu langsam – die Karte kommt wie nach einem Fehler noch einmal, zählt aber nicht als Fehler.
+  submit(correct, ms = 0, { again = false } = {}) {
     const task = this.current;
     if (!task) return;
     this.results.push({ key: task.key, correct, ms, quiz: !!task.quiz });
     this.pos += 1;
     if (task.quiz) return; // Quizfragen: keine Wiederholung, keine Extra-Karte
-    if (correct) {
-      this.streakWrong = 0;
-      return;
-    }
-    this.streakWrong += 1;
+    if (correct) this.streakWrong = 0;
+    else this.streakWrong += 1;
+    if (correct && !again) return;
     const count = this.repeats[task.key] ?? 0;
     if (count < MAX_REPEATS) {
       this.repeats[task.key] = count + 1;
       const gap = 2 + Math.floor(this.rng() * 2);
       const at = Math.min(this.pos + gap, this.queue.length);
-      this.queue.splice(at, 0, { key: task.key, swapped: false, hop: false });
+      this.queue.splice(at, 0, { key: task.key, swapped: false, hop: false, repeat: true });
     }
-    if (this.streakWrong % 2 === 0) {
+    if (!correct && this.streakWrong % 2 === 0) {
       const upcoming = new Set(this.queue.slice(this.pos).map((t) => t.key));
       const options = this.easyPool.filter((key) => !upcoming.has(key) && key !== task.key);
       if (options.length) {

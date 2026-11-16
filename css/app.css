@@ -352,6 +352,20 @@ p { margin: 0; }
 .hint-ask { display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 700; }
 .hint-ask .answer { font-family: var(--font-display); font-size: 30px; min-width: 2.4em; background: var(--paper); }
 
+/* Rückmeldung nach richtiger Antwort: blitzschnell oder „kommt gleich nochmal“ */
+.feedback { text-align: center; animation: pop 0.35s ease; }
+.feedback.fast {
+  padding: 2px 16px 5px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--sun);
+  box-shadow: var(--pop-small);
+  font-family: var(--font-display);
+  font-size: 24px;
+  transform: rotate(-2deg);
+}
+.feedback.slow { max-width: 17em; font-weight: 700; font-size: 18px; line-height: 1.3; }
+
 /* Quizfrage: drei Antworten zum Antippen statt Zahlenfeld */
 .play.quiz-mode .pad { display: none; }
 .task.quiz { align-content: space-evenly; gap: 18px; }
@@ -418,6 +432,7 @@ p { margin: 0; }
 .result { display: grid; gap: 16px; padding-top: 10px; }
 .result-head { text-align: center; display: grid; gap: 6px; padding: 22px 18px; }
 .result-head .score { font-family: var(--font-display); font-size: 44px; line-height: 1; }
+.result-head .fast-line { justify-self: center; margin-top: 6px; padding: 3px 14px 5px; border: 2px solid var(--ink); border-radius: 999px; background: var(--sun); font-family: var(--font-display); font-size: 20px; }
 .news { display: grid; gap: 10px; }
 .news-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; }
 .news-item .big { font-size: 40px; line-height: 1; }

@@ -4,6 +4,7 @@ import { dayNum, weekStart } from '../js/days.js';
 import {
   ROW_ORDER, newState, cardKey, parseKey, applyAnswer, rowStage,
   unlockedRows, focusRow, manualUnlock, dueKeys, dayGoalReached, dayGoalTarget, dayProgress, recordRound, recordQuiz,
+  SPEED_OPTIONS, speedLimit, tempoRecheck, markDiscovered,
 } from '../js/model.js';
 
 const T = 20000; // beliebiger Tag
@@ -35,13 +36,59 @@ test('cardKey/parseKey', () => {
   assert.deepEqual(parseKey('7x6'), { k: 7, n: 6 });
 });
 
-test('richtig hebt 0→1→2 auch langsam', () => {
+test('langsam (Hochzählen) bringt 0→1, aber nicht auf 2', () => {
+  const s = newState(T);
+  const first = applyAnswer(s, '3x2', { correct: true, ms: 9000, today: T });
+  assert.equal(s.cards['3x2'].box, 1);
+  assert.equal(first.slow, false); // Kennenlernen aus Fach 0 ist nie „zu langsam“
+  const second = applyAnswer(s, '3x2', { correct: true, ms: 9000, today: T });
+  assert.equal(s.cards['3x2'].box, 1);
+  assert.equal(s.cards['3x2'].due, T);
+  assert.equal(second.slow, true);
+  assert.equal(second.fast, false);
+});
+
+test('blitzschnell (≤ 4 s) hebt 1→2', () => {
   const s = newState(T);
   applyAnswer(s, '3x2', { correct: true, ms: 9000, today: T });
-  assert.equal(s.cards['3x2'].box, 1);
-  applyAnswer(s, '3x2', { correct: true, ms: 9000, today: T });
+  const r = applyAnswer(s, '3x2', { correct: true, ms: 4000, today: T });
+  assert.equal(r.fast, true);
   assert.equal(s.cards['3x2'].box, 2);
   assert.equal(s.cards['3x2'].due, T + 1);
+});
+
+test('Zeitgrenze kommt aus den Einstellungen (3/4/6 s), sonst 4 s', () => {
+  assert.deepEqual(SPEED_OPTIONS, [3000, 4000, 6000]);
+  const s = newState(T);
+  assert.equal(speedLimit(s), 4000);
+  s.settings.speedMs = 3000;
+  Object.assign(s.cards['3x2'], { box: 1, due: T });
+  assert.equal(applyAnswer(s, '3x2', { correct: true, ms: 3500, today: T }).slow, true);
+  s.settings.speedMs = 6000;
+  assert.equal(applyAnswer(s, '3x2', { correct: true, ms: 5500, today: T }).fast, true);
+  assert.equal(s.cards['3x2'].box, 2);
+  s.settings.speedMs = 1234;
+  assert.equal(speedLimit(s), 4000);
+});
+
+test('Wiederholung in derselben Runde hebt nicht an', () => {
+  const s = newState(T);
+  Object.assign(s.cards['3x2'], { box: 1, due: T });
+  const r = applyAnswer(s, '3x2', { correct: true, ms: 1000, today: T, repeat: true });
+  assert.equal(r.fast, true);
+  assert.equal(s.cards['3x2'].box, 1);
+  assert.equal(s.stats.right, 1);
+});
+
+test('Silber nur mit blitzschnellen Antworten – Hochzählen schaltet nichts frei', () => {
+  const s = newState(T);
+  answerRow(s, 2, { ms: 12000 });
+  const slow = answerRow(s, 2, { ms: 12000 });
+  assert.equal(rowStage(s, 2), 1);
+  assert.ok(slow.every((r) => r.unlocked.length === 0));
+  const fast = answerRow(s, 2, { ms: 2500 });
+  assert.equal(rowStage(s, 2), 2);
+  assert.deepEqual(fast.at(-1).unlocked, [10]);
 });
 
 test('pauken am selben Tag bleibt bei Fach 2', () => {
@@ -58,12 +105,17 @@ test('fällig + flott steigt über 2', () => {
   assert.equal(s.cards['3x2'].due, T + 3);
 });
 
-test('langsam steigt nicht über 2', () => {
+test('langsam ab Fach 2 fällt auf Fach 1 zurück, fällig heute, kein Fehler', () => {
   const s = newState(T);
-  Object.assign(s.cards['3x2'], { box: 2, due: T });
-  applyAnswer(s, '3x2', { correct: true, ms: 8000, today: T });
-  assert.equal(s.cards['3x2'].box, 2);
+  Object.assign(s.cards['3x2'], { box: 4, due: T });
+  s.stats.streak = 3;
+  const r = applyAnswer(s, '3x2', { correct: true, ms: 8000, today: T });
+  assert.equal(r.slow, true);
+  assert.equal(s.cards['3x2'].box, 1);
   assert.equal(s.cards['3x2'].due, T);
+  assert.equal(s.cards['3x2'].wrong, 0);
+  assert.equal(s.stats.streak, 4);
+  assert.equal(s.days[T].right, 1);
 });
 
 test('Fach 5 bleibt Fach 5', () => {
@@ -221,4 +273,82 @@ test('Quizantwort: richtig zählt fürs Tagesziel, ändert aber keine Karten und
   assert.equal(s.stats.streak, streak);
   assert.equal(JSON.stringify(s.cards), cardsMid);
   assert.equal(recordQuiz(s, { correct: true, today: T }).goalReached, false); // nur einmal melden
+});
+
+// Reihe offen wie durch normales Freischalten (nicht von Hand), mit Karten in Fach box und letzter Zeit ms.
+function setRow(s, n, box, ms = 2000) {
+  const row = s.rows[n];
+  if (!row.open) { s.seq += 1; Object.assign(row, { open: true, seq: s.seq, manual: false }); }
+  row.discovered = true;
+  for (let k = 1; k <= 10; k++) Object.assign(s.cards[cardKey(k, n)], { box, due: T + 1, lastMs: ms });
+  row.stage = box >= 5 ? 4 : box >= 4 ? 3 : box >= 2 ? 2 : box >= 1 ? 1 : 0;
+}
+
+function tempoState() {
+  const s = newState(T);
+  setRow(s, 2, 2);
+  setRow(s, 10, 2);
+  s.cards['7x10'].lastMs = 9000;
+  setRow(s, 5, 3);
+  setRow(s, 1, 2);
+  s.cards['3x1'].lastMs = 15000;
+  s.cards['8x1'].lastMs = 4500;
+  setRow(s, 4, 1, 20000);
+  return s;
+}
+
+test('Tempo-Prüfung: Vorschau ändert nichts', () => {
+  const s = tempoState();
+  const before = JSON.stringify(s);
+  const r = tempoRecheck(s, T);
+  assert.deepEqual([...r.demoted].sort(), ['3x1', '7x10', '8x1']);
+  assert.deepEqual(r.locked, [1, 4]);
+  assert.equal(r.focus, 10);
+  assert.equal(JSON.stringify(s), before);
+});
+
+test('Tempo-Prüfung: langsame Karten zurück, Inseln ohne Silber gesperrt bis auf eine', () => {
+  const s = tempoState();
+  s.stickers['row-1-2'] = { day: T, fresh: false };
+  tempoRecheck(s, T, { apply: true });
+  assert.deepEqual(s.cards['7x10'], { ...s.cards['7x10'], box: 1, due: T });
+  assert.equal(s.cards['1x10'].box, 2); // schnelle Karten bleiben
+  assert.equal(s.cards['3x4'].box, 1); // Fach 1 bleibt Fach 1
+  assert.equal(rowStage(s, 10), 1);
+  assert.equal(rowStage(s, 1), 1);
+  assert.equal(rowStage(s, 5), 2); // Fach 3 überall → Silber (Gold braucht Fach 4)
+  assert.deepEqual(unlockedRows(s), [2, 10, 5]);
+  assert.equal(focusRow(s), 10);
+  assert.ok(s.rows[1].discovered && s.rows[4].discovered);
+  assert.ok(s.stickers['row-1-2']); // Sticker bleiben
+});
+
+test('Tempo-Prüfung: von Hand freigeschaltete Reihe bleibt offen', () => {
+  const s = tempoState();
+  s.rows[4].manual = true;
+  const r = tempoRecheck(s, T, { apply: true });
+  assert.deepEqual(r.locked, [1]);
+  assert.ok(s.rows[4].open);
+});
+
+test('Tempo-Prüfung: ist die 2er nicht mehr Silber, wird sie die Übungsinsel', () => {
+  const s = newState(T);
+  setRow(s, 2, 2, 9000);
+  setRow(s, 10, 2);
+  setRow(s, 5, 1);
+  const r = tempoRecheck(s, T, { apply: true });
+  assert.deepEqual(unlockedRows(s), [2, 10]);
+  assert.deepEqual(r.locked, [5]);
+  assert.equal(r.focus, 2);
+});
+
+test('Tempo-Prüfung: alles schnell → nichts ändert sich', () => {
+  const s = newState(T);
+  setRow(s, 2, 3);
+  setRow(s, 10, 1, 9000);
+  const before = JSON.stringify(s);
+  const r = tempoRecheck(s, T, { apply: true });
+  assert.deepEqual(r.demoted, []);
+  assert.deepEqual(r.locked, []);
+  assert.equal(JSON.stringify(s), before);
 });
