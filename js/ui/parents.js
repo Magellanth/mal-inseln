@@ -1,7 +1,7 @@
 // Eltern-Bereich hinter einer Rechenaufgabe: Lernstand, Problemaufgaben, Freischalten, Sicherungscode, Einstellungen.
 
 import { h, add, fill, ask, toast } from './dom.js';
-import { app, go, today, persist, APP_VERSION } from './core.js';
+import { app, go, today, persist, APP_VERSION, versionLabel } from './core.js';
 import {
   ROW_ORDER, STAGE_NAMES, rowKeys, parseKey, manualUnlock, goalDays, newState, DAY_GOAL_OPTIONS, dayGoalTarget,
   SPEED_OPTIONS, speedLimit, tempoRecheck,
@@ -308,11 +308,11 @@ export function parents(root, params = {}) {
 
   const persistNote = h('p', { class: 'soft', style: { fontSize: '14px' } });
   // Ist im Hintergrund schon eine neuere Version geladen, läuft sie erst nach dem Neustart der App.
-  const versionNote = h('p', { class: 'soft', style: { fontSize: '14px' } }, `Mal-Inseln Version ${APP_VERSION}`);
+  const versionNote = h('p', { class: 'soft', style: { fontSize: '14px' } }, `Mal-Inseln Version ${versionLabel()}`);
   globalThis.caches?.keys().then((keys) => {
     const newest = Math.max(0, ...keys.map((k) => Number(/^mal-inseln-v(\d+)$/.exec(k)?.[1] ?? 0)));
     if (newest > APP_VERSION) {
-      versionNote.textContent = `Mal-Inseln Version ${APP_VERSION} – Version ${newest} ist schon geladen. Die App ganz schließen und neu öffnen, dann ist sie aktiv.`;
+      versionNote.textContent = `Mal-Inseln Version ${versionLabel()} – Version ${versionLabel(newest)} ist schon geladen. Die App ganz schließen und neu öffnen, dann ist sie aktiv.`;
     }
   }).catch(() => {});
   navigator.storage?.persisted?.().then((ok) => {

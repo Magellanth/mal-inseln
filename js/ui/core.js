@@ -3,8 +3,13 @@
 import { dayNum } from '../days.js';
 import { save } from '../storage.js';
 
-// Version der App, im Eltern-Bereich sichtbar. Muss zu VERSION in sw.js passen (mal-inseln-v<Zahl>) – ein Test prüft das.
-export const APP_VERSION = 7;
+// Version der App (fortlaufende Zahl). Muss zu VERSION in sw.js passen (mal-inseln-v<Zahl>) – ein Test prüft das.
+// Angezeigt wird sie als „1.<Zahl>“, z. B. 8 → „Version 1.8“.
+export const APP_VERSION = 8;
+
+export function versionLabel(n = APP_VERSION) {
+  return `1.${n}`;
+}
 
 export const app = {
   state: null,

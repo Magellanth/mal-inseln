@@ -2,7 +2,7 @@
 // Bei jedem Update VERSION erhöhen – dann lädt das Handy alle Dateien gemeinsam neu.
 // Dieselbe Zahl als APP_VERSION in js/ui/core.js eintragen (wird im Eltern-Bereich angezeigt).
 
-const VERSION = 'mal-inseln-v7';
+const VERSION = 'mal-inseln-v8';
 const FONT_CACHE = 'mal-inseln-fonts';
 
 const ASSETS = [

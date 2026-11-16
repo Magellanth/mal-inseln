@@ -27,3 +27,10 @@ test('App-Version und Service-Worker-Version stimmen überein', async () => {
   assert.ok(Number.isInteger(APP_VERSION) && APP_VERSION >= 7);
   assert.equal(sw.match(/const VERSION = '([^']+)'/)[1], `mal-inseln-v${APP_VERSION}`);
 });
+
+test('Version wird als 1.x angezeigt', async () => {
+  const { versionLabel, APP_VERSION } = await import('../js/ui/core.js');
+  assert.equal(versionLabel(7), '1.7');
+  assert.equal(versionLabel(12), '1.12');
+  assert.equal(versionLabel(), `1.${APP_VERSION}`);
+});
