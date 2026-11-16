@@ -3,6 +3,9 @@
 import { dayNum } from '../days.js';
 import { save } from '../storage.js';
 
+// Version der App, im Eltern-Bereich sichtbar. Muss zu VERSION in sw.js passen (mal-inseln-v<Zahl>) – ein Test prüft das.
+export const APP_VERSION = 7;
+
 export const app = {
   state: null,
   screens: {},

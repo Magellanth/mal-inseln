@@ -20,3 +20,10 @@ test('Service Worker cacht genau alle App-Dateien', () => {
   ];
   assert.deepEqual([...listed].sort(), [...expected].sort());
 });
+
+test('App-Version und Service-Worker-Version stimmen überein', async () => {
+  const { APP_VERSION } = await import('../js/ui/core.js');
+  const sw = readFileSync(new URL('sw.js', root), 'utf8');
+  assert.ok(Number.isInteger(APP_VERSION) && APP_VERSION >= 7);
+  assert.equal(sw.match(/const VERSION = '([^']+)'/)[1], `mal-inseln-v${APP_VERSION}`);
+});
